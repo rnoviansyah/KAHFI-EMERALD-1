@@ -220,10 +220,34 @@ function sanitizeFormData(sheetName, formData) {
   return cleanData;
 }
 
+async function isVerifiedRT() {
+  try {
+    let savedRaw = localStorage.getItem('rt_user_session');
+    if (!savedRaw) return false;
+    let saved = JSON.parse(savedRaw);
+    if (!saved || !saved.token) return false;
+
+    let savedRole = (saved.role) ? String(saved.role).toUpperCase() : '';
+    if (savedRole !== 'RT') return false;
+
+    // Verifikasi Token ke database Supabase
+    let { data: sessData, error } = await db.from('Sessions').select('*').eq('token', saved.token);
+    if (error || !sessData || sessData.length === 0) return false;
+
+    let dbRole = (sessData[0].role || sessData[0].ROLE || '').toString().toUpperCase();
+    return dbRole === 'RT';
+  } catch (e) {
+    return false;
+  }
+}
+
 async function safeSupabaseUpdate(tableName, payload, eqColumn, eqValue) {
-  // Proteksi Frontend: Hanya RT yang boleh melakukan UPDATE pada tabel Warga
-  if (tableName.toLowerCase() === 'warga' && String(session.role || '').toUpperCase() !== 'RT') {
-    return { error: { message: 'Akses ditolak! Hanya RT yang diizinkan mengedit data warga.' } };
+  // Proteksi Keamanan Backend: Verifikasi token RT di Database
+  let lowerT = tableName.toLowerCase();
+  if (['warga', 'users', 'pengaturan', 'keuangan'].includes(lowerT)) {
+    if (!(await isVerifiedRT())) {
+      return { error: { message: 'Akses ditolak! Sesi Anda bukan RT terverifikasi di database.' } };
+    }
   }
 
   // Sanitasi payload dari field kosong bernilai bigint/numeric
@@ -265,9 +289,9 @@ async function safeSupabaseUpdate(tableName, payload, eqColumn, eqValue) {
 }
 
 async function safeSupabaseDelete(tableName, eqColumn, eqValue) {
-  // Proteksi Frontend: Hanya RT yang boleh Hapus
-  if (String(session.role || '').toUpperCase() !== 'RT') {
-    return { error: { message: 'Akses ditolak! Hanya RT yang diizinkan menghapus data.' } };
+  // Proteksi Keamanan Backend: Verifikasi token RT di Database
+  if (!(await isVerifiedRT())) {
+    return { error: { message: 'Akses ditolak! Sesi Anda bukan RT terverifikasi di database.' } };
   }
 
   // Hapus cache menu setelah delete
@@ -574,8 +598,13 @@ async function callGASPost(actionName, extraPayload = {}) {
       return { status: 'success', message: 'Data berhasil dihapus!' };
     }
 
+    if (['hapusUserAkun', 'resetPasswordUser', 'editUserAkun', 'tambahUserWarga', 'simpanPengaturanApp', 'hapusDataDariSheet', 'simpanInfoWarga'].includes(actionName)) {
+      if (!(await isVerifiedRT())) {
+        return { status: 'error', message: 'Akses ditolak! Sesi Anda bukan RT terverifikasi di database.' };
+      }
+    }
+
     if (actionName === 'simpanInfoWarga') {
-      if (session.role !== 'RT') return { status: 'error', message: 'Hanya RT yang diizinkan memperbarui info warga!' };
       const { error } = await db.from('Pengaturan').upsert([{ kunci: 'info_warga', nilai: extraPayload.teksBaru }], { onConflict: 'kunci' });
       if (error) return { status: 'error', message: error.message };
       return { status: 'success', message: 'Informasi warga berhasil diperbarui!' };
