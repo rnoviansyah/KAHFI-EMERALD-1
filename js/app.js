@@ -561,6 +561,17 @@ async function callGASPost(actionName, extraPayload = {}) {
       const sheetName = extraPayload.sheetName;
       const id = extraPayload.id;
       let formData = sanitizeFormData(sheetName, extraPayload.formData);
+
+      let isRT = await isVerifiedRT();
+      if (!isRT) {
+        if (['Warga', 'Users', 'Pengaturan', 'Keuangan'].includes(sheetName)) {
+          return { status: 'error', message: 'Akses ditolak! Sesi Anda bukan RT terverifikasi di database.' };
+        }
+        // Warga tidak diizinkan mengubah status aduan/surat/aset orang lain
+        if (formData.status) delete formData.status;
+        if (formData.status_barang) delete formData.status_barang;
+      }
+
       let resUpdate = await safeSupabaseUpdate(sheetName, formData, 'id', id);
       if (resUpdate.error && sheetName.toLowerCase() === 'warga') {
         let targetNik = editingNik || id;
@@ -771,10 +782,10 @@ const FALLBACK_HEADERS = {
       }
 
       let filteredData = safeData;
-      const cleanRole = (session.role || 'warga').toLowerCase();
+      let isRT = await isVerifiedRT();
       
-      // Jika Warga (Bukan RT), filter data agar HANYA melihat data miliknya sendiri
-      if (cleanRole !== 'rt') {
+      // Jika BUKAN RT terverifikasi di database, filter data agar HANYA melihat data miliknya sendiri
+      if (!isRT) {
         let userNik = (session.nik || '').toString().trim();
         let userNama = (session.nama || '').toString().trim().toLowerCase();
 
@@ -806,8 +817,8 @@ const FALLBACK_HEADERS = {
       const { data: safeData } = await safeSupabaseSelect('Iuran');
       if (!safeData || safeData.length === 0) return { status: 'success', headers: [], rows: [] };
       let filteredData = safeData;
-      const cleanRole = (session.role || 'warga').toLowerCase();
-      if (cleanRole !== 'rt' && session.nik) {
+      let isRT = await isVerifiedRT();
+      if (!isRT && session.nik) {
         let userKk = '';
         const { data: safeWarga } = await safeSupabaseSelect('Warga');
         if (safeWarga) {
