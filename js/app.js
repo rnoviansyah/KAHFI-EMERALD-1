@@ -583,8 +583,15 @@ async function callGASPost(actionName, extraPayload = {}) {
 
     if (actionName === 'simpanPengaturanApp') {
       if (session.role !== 'RT') return { status: 'error', message: 'Hanya RT yang diizinkan memperbarui pengaturan!' };
-      const { error } = await db.from('Pengaturan').upsert(extraPayload.settingsArray, { onConflict: 'kunci' });
-      if (error) return { status: 'error', message: error.message };
+      let errArr = [];
+      for (let s of (extraPayload.settingsArray || [])) {
+        let { data, error: errUpd } = await db.from('Pengaturan').update({ nilai: s.nilai }).eq('kunci', s.kunci).select();
+        if (errUpd || !data || data.length === 0) {
+          let { error: errIns } = await db.from('Pengaturan').insert([s]);
+          if (errIns && errUpd) errArr.push(errIns.message);
+        }
+      }
+      if (errArr.length > 0) return { status: 'error', message: errArr.join(', ') };
       return { status: 'success', message: 'Pengaturan aplikasi berhasil disimpan!' };
     }
 
@@ -2152,6 +2159,14 @@ function bukaModalEditUser(uName, uNik, uRole) {
   
   if (modalTitle) modalTitle.innerText = `Edit Akun User: ${uName}`;
   if (btnHapus) btnHapus.style.display = 'none';
+
+  let styleId = 'hide-modal-footer-override';
+  if (!document.getElementById(styleId)) {
+    let style = document.createElement('style');
+    style.id = styleId;
+    style.innerHTML = `#formModal .modal-footer { display: none !important; }`;
+    document.head.appendChild(style);
+  }
 
   let cleanNik = (uNik === '-' || uNik === 'undefined') ? '' : uNik;
 

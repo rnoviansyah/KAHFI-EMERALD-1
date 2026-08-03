@@ -382,14 +382,19 @@ async function verifikasiPembayaranRT(id) {
 
     let res = await safeSupabaseUpdate('Iuran', formData, 'id', id);
 
-    if (res && res.status === 'success') {
+    if (res && (!res.error || res.status === 'success')) {
       delete menuDataCache['Iuran'];
-      if (bootstrapModalInstance) bootstrapModalInstance.hide();
+      let modalEl = document.getElementById('formModal');
+      if (modalEl) {
+        let mInst = bootstrap.Modal.getInstance(modalEl);
+        if (mInst) mInst.hide();
+      }
       showUIToast('Pembayaran iuran berhasil diverifikasi menjadi LUNAS!', 'success');
       loadMenu('Iuran');
       fetchNotifikasi();
     } else {
-      showUIToast('Gagal memverifikasi: ' + (res ? res.message : 'Terjadi kesalahan'), 'error');
+      let errMsg = (res && res.error) ? res.error.message : ((res && res.message) ? res.message : 'Terjadi kesalahan');
+      showUIToast('Gagal memverifikasi: ' + errMsg, 'error');
     }
   }, 'Verifikasi Iuran');
 }
