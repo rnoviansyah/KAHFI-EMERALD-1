@@ -1750,7 +1750,7 @@ function updateDynamicManifest() {
     let absStartUrl = baseUrl + 'index.html';
     let absScope = baseUrl;
 
-    let logoUrl = appSettings.app_logo || 'https://file.aiquickdraw.com/imgcompressed/img/compressed_517f8d7424520a05c902d8a1c25e1ab6.webp';
+    let logoUrl = appSettings.app_logo || 'data:image/jpeg;base64,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';
     let mimeType = 'image/webp';
     if (logoUrl.startsWith('data:image/png')) mimeType = 'image/png';
     else if (logoUrl.startsWith('data:image/jpeg') || logoUrl.startsWith('data:image/jpg')) mimeType = 'image/jpeg';
@@ -1834,6 +1834,7 @@ async function loadAppSettings() {
       });
     }
     if (appSettings.app_logo) {
+      try { localStorage.setItem('cached_app_logo', appSettings.app_logo); } catch(e) {}
       document.querySelectorAll('.app-logo-img').forEach(img => {
         img.src = appSettings.app_logo;
       });
@@ -1906,23 +1907,50 @@ function handleLogoFileUpload(event) {
   let file = event.target.files[0];
   if (!file) return;
 
-  if (file.size > 3 * 1024 * 1024) {
-    alert("Ukuran file logo terlalu besar. Harap pilih gambar dengan ukuran di bawah 3MB.");
-    return;
-  }
-
   let reader = new FileReader();
   reader.onload = function(e) {
-    let base64 = e.target.result;
-    let inputUrl = document.getElementById('set-app-logo');
-    let previewImg = document.getElementById('preview-logo-upload');
-    if (inputUrl) inputUrl.value = base64;
-    if (previewImg) previewImg.src = base64;
+    let img = new Image();
+    img.onload = function() {
+      let canvas = document.createElement('canvas');
+      let maxDim = 250;
+      let width = img.width;
+      let height = img.height;
 
-    document.querySelectorAll('.app-logo-img').forEach(img => {
-      img.src = base64;
-    });
-    if (typeof showUIToast === 'function') showUIToast('Logo baru terpilih! Klik "Simpan Identitas & Tema" untuk menerapkan.', 'info');
+      if (width > height) {
+        if (width > maxDim) {
+          height = Math.round((height * maxDim) / width);
+          width = maxDim;
+        }
+      } else {
+        if (height > maxDim) {
+          width = Math.round((width * maxDim) / height);
+          height = maxDim;
+        }
+      }
+
+      canvas.width = width;
+      canvas.height = height;
+      let ctx = canvas.getContext('2d');
+      ctx.drawImage(img, 0, 0, width, height);
+
+      let compressedBase64 = canvas.toDataURL('image/png', 0.9);
+
+      let inputUrl = document.getElementById('set-app-logo');
+      let previewImg = document.getElementById('preview-logo-upload');
+      if (inputUrl) inputUrl.value = compressedBase64;
+      if (previewImg) previewImg.src = compressedBase64;
+
+      document.querySelectorAll('.app-logo-img').forEach(el => {
+        el.src = compressedBase64;
+      });
+
+      try { localStorage.setItem('cached_app_logo', compressedBase64); } catch(err) {}
+
+      if (typeof showUIToast === 'function') {
+        showUIToast('Logo baru terpilih! Klik "Simpan Identitas & Tema" di bawah.', 'info');
+      }
+    };
+    img.src = e.target.result;
   };
   reader.readAsDataURL(file);
 }
@@ -2200,7 +2228,7 @@ async function renderPengaturanRTView() {
                   <div class="p-3 bg-light border rounded-3 mb-2">
                     <div class="d-flex align-items-center gap-3">
                       <div class="text-center">
-                        <img id="preview-logo-upload" src="${appSettings.app_logo || 'https://file.aiquickdraw.com/imgcompressed/img/compressed_517f8d7424520a05c902d8a1c25e1ab6.webp'}" alt="Preview Logo" class="rounded-circle border shadow-sm app-logo-img" style="width: 55px; height: 55px; object-fit: cover;">
+                        <img id="preview-logo-upload" src="${appSettings.app_logo || 'data:image/jpeg;base64,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 arrangements}' alt="Preview Logo" class="rounded-circle border shadow-sm app-logo-img" style="width: 55px; height: 55px; object-fit: cover;">
                         <small class="d-block text-[9px] text-gray-500 mt-1 font-bold">Pratinjau</small>
                       </div>
                       <div class="flex-grow-1 space-y-2">
@@ -2478,6 +2506,12 @@ async function renderPengaturanRTView() {
 // ==== DOM READY ===========================================
 // ==========================================================
 document.addEventListener("DOMContentLoaded", function() {
+  try {
+    let fastLogo = localStorage.getItem('cached_app_logo');
+    if (fastLogo) {
+      document.querySelectorAll('.app-logo-img').forEach(img => { img.src = fastLogo; });
+    }
+  } catch(e) {}
   loadAppSettings();
   checkExistingSession();
   document.addEventListener('submit', e => e.preventDefault());
