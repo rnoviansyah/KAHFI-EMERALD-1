@@ -42,7 +42,7 @@ function renderIuranCustom(data) {
     <div class="p-1 text-gray-800 font-sans">
       <!-- Header Banner Status Iuran -->
       <div class="bg-gradient-to-r from-blue-900 to-blue-600 text-white p-5 rounded-2xl shadow-md mb-4 text-center">
-        <h2 class="font-bold text-lg mb-1"><i class="bi bi-wallet2 me-2"></i>Status Iuran Warga 2026</h2>
+        <h2 class="font-bold text-lg mb-1"><i class="bi bi-wallet2 me-2"></i>Status Iuran Warga ${new Date().getFullYear()}</h2>
         <p class="text-xs text-blue-100">Transparan, Cek Status & Pembayaran Bulanan RT 008/006</p>
       </div>
 
@@ -157,7 +157,7 @@ function renderListBulanDatabase(rows, headers) {
   rows.forEach((r) => {
     let rowId = r[idIdx] || '';
     let bulanVal = getVal(r, headers, 'bulan', '-');
-    let tahunVal = getVal(r, headers, 'tahun', '2026');
+    let tahunVal = getVal(r, headers, 'tahun', new Date().getFullYear().toString());
     let namaVal = getVal(r, headers, 'nama', '-');
     let nominalRaw = getVal(r, headers, 'nominal', '0');
     let nominalVal = Number(nominalRaw.toString().replace(/[^0-9]/g, '')) || 0;
@@ -418,6 +418,12 @@ async function bukaModalTambahIuranRT() {
     });
   }
 
+  let currentYear = new Date().getFullYear();
+  let yearOptions = '';
+  for (let y = currentYear - 2; y <= currentYear + 3; y++) {
+    yearOptions += `<option value="${y}" ${y === currentYear ? 'selected' : ''}>${y}</option>`;
+  }
+
   let htmlForm = `
     <div class="p-2 space-y-3 text-xs">
       <div>
@@ -449,7 +455,9 @@ async function bukaModalTambahIuranRT() {
       </div>
       <div>
         <label class="font-bold text-gray-600 mb-1 block">Tahun</label>
-        <input type="text" id="iuran-input-tahun" value="2026" class="w-full p-2 border rounded-xl bg-gray-50" readonly>
+        <select id="iuran-input-tahun" class="w-full p-2 border rounded-xl bg-white">
+          ${yearOptions}
+        </select>
       </div>
       <div>
         <label class="font-bold text-gray-600 mb-1 block">Nominal Tagihan (Rp)</label>
