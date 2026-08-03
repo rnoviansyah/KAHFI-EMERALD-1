@@ -384,12 +384,41 @@ async function verifikasiPembayaranRT(id) {
 
     if (res && (!res.error || res.status === 'success')) {
       delete menuDataCache['Iuran'];
+
+      // Integrasi Otomatis: Catat Pemasukan Kas di Laporan Keuangan
+      let idIdx = iuranHeaders.indexOf('id');
+      let iuranItem = rawIuranData.find(r => idIdx > -1 && String(r[idIdx]) === String(id));
+
+      let namaWarga = getVal(iuranItem || [], iuranHeaders, 'nama', 'Warga');
+      let bulan = getVal(iuranItem || [], iuranHeaders, 'bulan', 'Iuran');
+      let tahun = getVal(iuranItem || [], iuranHeaders, 'tahun', new Date().getFullYear());
+      let nominal = getVal(iuranItem || [], iuranHeaders, 'nominal', '25000');
+      let bukti = getVal(iuranItem || [], iuranHeaders, 'bukti_transfer', '-');
+      let nominalNum = Number(nominal.toString().replace(/[^0-9]/g, '')) || 0;
+
+      let kasItem = {
+        id: 'KAS-' + Date.now(),
+        tanggal: nowFormatted,
+        pemasukan: nominalNum,
+        pengeluaran: 0,
+        keterangan: `Pembayaran Iuran ${bulan} ${tahun} (${namaWarga})`,
+        saldo: 0,
+        foto_url: bukti || '-'
+      };
+
+      try {
+        await safeSupabaseInsert('Keuangan', [kasItem]);
+        delete menuDataCache['Keuangan'];
+      } catch (e) {
+        console.error('Gagal otomatis mencatat ke Keuangan:', e);
+      }
+
       let modalEl = document.getElementById('formModal');
       if (modalEl) {
         let mInst = bootstrap.Modal.getInstance(modalEl);
         if (mInst) mInst.hide();
       }
-      showUIToast('Pembayaran iuran berhasil diverifikasi menjadi LUNAS!', 'success');
+      showUIToast('Pembayaran iuran LUNAS & otomatis masuk Laporan Keuangan!', 'success');
       loadMenu('Iuran');
       fetchNotifikasi();
     } else {
@@ -523,9 +552,31 @@ async function simpanIuranBaruRT(event) {
     return;
   }
 
+  if (formData.status.toUpperCase() === 'LUNAS') {
+    let nowFormatted = new Date().toLocaleDateString('id-ID', {
+      day: '2-digit', month: '2-digit', year: 'numeric'
+    }) + ' ' + new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }).replace('.', ':') + ' WIB';
+    formData.tanggal_bayar = nowFormatted;
+    formData.diterima_oleh = 'RT 008/006 (' + (session.nama || 'Pengurus') + ')';
+
+    let kasItem = {
+      id: 'KAS-' + Date.now(),
+      tanggal: nowFormatted,
+      pemasukan: Number(formData.nominal) || 0,
+      pengeluaran: 0,
+      keterangan: `Pembayaran Iuran ${formData.bulan} ${formData.tahun} (${formData.nama})`,
+      saldo: 0,
+      foto_url: '-'
+    };
+    try {
+      await safeSupabaseInsert('Keuangan', [kasItem]);
+      delete menuDataCache['Keuangan'];
+    } catch (e) {}
+  }
+
   const res = await callGASPost('simpanDataKeSheet', { sheetName: 'Iuran', formData: formData });
   if (res && res.status === 'success') {
-    alert('Tagihan iuran berhasil ditambahkan!');
+    showUIToast('Tagihan iuran berhasil ditambahkan!', 'success');
     let modalEl = document.getElementById('formModal');
     let modalInstance = bootstrap.Modal.getInstance(modalEl);
     if (modalInstance) modalInstance.hide();
@@ -533,7 +584,7 @@ async function simpanIuranBaruRT(event) {
     if (typeof clearAppCache === 'function') clearAppCache();
     loadIuranView();
   } else {
-    alert('Gagal menyimpan: ' + (res.message || 'Terjadi kesalahan'));
+    showUIToast('Gagal menyimpan: ' + (res.message || 'Terjadi kesalahan'), 'error');
   }
 }
 
