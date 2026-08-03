@@ -1884,6 +1884,31 @@ function selectThemeOption(themeName) {
   applyTheme(themeName);
 }
 
+function handleLogoFileUpload(event) {
+  let file = event.target.files[0];
+  if (!file) return;
+
+  if (file.size > 3 * 1024 * 1024) {
+    alert("Ukuran file logo terlalu besar. Harap pilih gambar dengan ukuran di bawah 3MB.");
+    return;
+  }
+
+  let reader = new FileReader();
+  reader.onload = function(e) {
+    let base64 = e.target.result;
+    let inputUrl = document.getElementById('set-app-logo');
+    let previewImg = document.getElementById('preview-logo-upload');
+    if (inputUrl) inputUrl.value = base64;
+    if (previewImg) previewImg.src = base64;
+
+    document.querySelectorAll('.app-logo-img').forEach(img => {
+      img.src = base64;
+    });
+    if (typeof showUIToast === 'function') showUIToast('Logo baru terpilih! Klik "Simpan Identitas & Tema" untuk menerapkan.', 'info');
+  };
+  reader.readAsDataURL(file);
+}
+
 function tambahBarisRekening() {
   let container = document.getElementById('container-rekening-list');
   if (!container) return;
@@ -2055,7 +2080,12 @@ async function renderPengaturanRTView() {
   let usersList = [];
   try {
     const { data: usersData } = await safeSupabaseSelect('Users');
-    usersList = usersData || [];
+    if (usersData && usersData.length > 0) {
+      usersList = usersData;
+    } else {
+      const { data: rpcUsers } = await db.rpc('get_users_secured', { p_token: session.token || '' });
+      if (rpcUsers) usersList = rpcUsers;
+    }
   } catch(e) {}
 
   let sessionsList = [];
@@ -2147,12 +2177,28 @@ async function renderPengaturanRTView() {
                 <small class="text-muted">Nomor WhatsApp RT ini yang akan otomatis dihubungi warga saat mengirim Laporan Pengaduan, Surat Pengantar, atau Sumbangan.</small>
               </div>
               <div class="row g-3 mb-3">
-                <div class="col-md-9">
-                  <label class="form-label font-semibold text-xs text-gray-700">URL LOGO RT (Link Gambar/Foto)</label>
-                  <input type="text" id="set-app-logo" class="form-control" value="${appSettings.app_logo || ''}" placeholder="https://...">
-                  <small class="text-muted">URL foto logo RT. Logo juga dipakai sebagai icon PWA.</small>
+                <div class="col-md-8">
+                  <label class="form-label font-semibold text-xs text-gray-700">LOGO RT / IKON APLIKASI</label>
+                  <div class="p-3 bg-light border rounded-3 mb-2">
+                    <div class="d-flex align-items-center gap-3">
+                      <div class="text-center">
+                        <img id="preview-logo-upload" src="${appSettings.app_logo || 'https://file.aiquickdraw.com/imgcompressed/img/compressed_517f8d7424520a05c902d8a1c25e1ab6.webp'}" alt="Preview Logo" class="rounded-circle border shadow-sm app-logo-img" style="width: 55px; height: 55px; object-fit: cover;">
+                        <small class="d-block text-[9px] text-gray-500 mt-1 font-bold">Pratinjau</small>
+                      </div>
+                      <div class="flex-grow-1 space-y-2">
+                        <div>
+                          <label class="btn btn-sm btn-outline-primary font-bold cursor-pointer text-xs mb-1">
+                            <i class="bi bi-upload me-1"></i>Pilih / Upload File Logo Baru
+                            <input type="file" id="file-app-logo" accept="image/*" class="d-none" onchange="handleLogoFileUpload(event)">
+                          </label>
+                          <small class="d-block text-[10px] text-gray-500">Upload foto logo dari HP / Komputer Anda (PNG/JPG/WebP).</small>
+                        </div>
+                        <input type="text" id="set-app-logo" class="form-control form-control-sm text-xs" value="${appSettings.app_logo || ''}" placeholder="Atau paste URL Foto Logo di sini..." oninput="document.getElementById('preview-logo-upload').src=this.value">
+                      </div>
+                    </div>
+                  </div>
                 </div>
-                <div class="col-md-3">
+                <div class="col-md-4">
                   <label class="form-label font-semibold text-xs text-gray-700">WARNA TEMA (Hex)</label>
                   <div class="d-flex gap-2 align-items-center">
                     <input type="color" id="set-app-theme-color" class="form-control form-control-color" value="${appSettings.app_theme_color || '#1e3a8a'}" title="Pilih warna tema" style="width:50px;">
