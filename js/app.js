@@ -770,8 +770,34 @@ const FALLBACK_HEADERS = {
         return { status: 'success', headers: fallbackH, rows: [] };
       }
 
-      const headers = Object.keys(safeData[0]);
-      let sortedFiltered = sortDataNewestFirst(safeData);
+      let filteredData = safeData;
+      const cleanRole = (session.role || 'warga').toLowerCase();
+      
+      // Jika Warga (Bukan RT), filter data agar HANYA melihat data miliknya sendiri
+      if (cleanRole !== 'rt') {
+        let userNik = (session.nik || '').toString().trim();
+        let userNama = (session.nama || '').toString().trim().toLowerCase();
+
+        if (['Pengaduan', 'SuratPengantar', 'Peminjaman', 'Sumbangan', 'Aspirasi'].includes(sheetName)) {
+          filteredData = filteredData.filter(row => {
+            let rNik = cariNilaiKolom(row, ['nik', 'ktp', 'no_ktp']).trim();
+            let rNama = cariNilaiKolom(row, ['nama', 'nama_lengkap', 'nama_peminjam', 'pelapor', 'pemohon']).toLowerCase().trim();
+
+            let matchNik = userNik && rNik && rNik === userNik;
+            let matchNama = userNama && rNama && (rNama === userNama || rNama.includes(userNama) || userNama.includes(rNama));
+            
+            return matchNik || matchNama;
+          });
+        }
+      }
+
+      if (filteredData.length === 0) {
+        const headers = Object.keys(safeData[0]);
+        return { status: 'success', headers: headers, rows: [] };
+      }
+
+      const headers = Object.keys(filteredData[0]);
+      let sortedFiltered = sortDataNewestFirst(filteredData);
       const rows = sortedFiltered.map(row => headers.map(h => row[h] !== null && row[h] !== undefined ? row[h] : ''));
       return { status: 'success', headers: headers, rows: rows };
     }
