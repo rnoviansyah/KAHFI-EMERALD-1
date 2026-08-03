@@ -2171,7 +2171,7 @@ function bukaModalEditUser(uName, uNik, uRole) {
   let cleanNik = (uNik === '-' || uNik === 'undefined') ? '' : uNik;
 
   let html = `
-    <form onsubmit="simpanEditUserAkun(event, '${uName}')" class="space-y-3 text-xs">
+    <div class="space-y-3 text-xs p-1">
       <div>
         <label class="font-bold text-gray-700 mb-1 block">Username</label>
         <input type="text" id="edit-user-username" value="${uName}" class="w-full p-2 border rounded-xl bg-white" required>
@@ -2192,9 +2192,9 @@ function bukaModalEditUser(uName, uNik, uRole) {
         <input type="password" id="edit-user-password" class="w-full p-2 border rounded-xl bg-white" placeholder="Kosongkan jika tidak ingin ganti password">
       </div>
       <div class="pt-2 flex gap-2">
-        <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white p-2.5 rounded-xl font-bold shadow transition">Simpan Perubahan</button>
+        <button type="button" onclick="simpanEditUserAkun(event, '${uName}')" class="w-full bg-blue-600 hover:bg-blue-700 text-white p-2.5 rounded-xl font-bold shadow transition">Simpan Perubahan</button>
       </div>
-    </form>
+    </div>
   `;
 
   if (dynamicForm) dynamicForm.innerHTML = html;
@@ -2206,10 +2206,17 @@ function bukaModalEditUser(uName, uNik, uRole) {
 
 async function simpanEditUserAkun(e, oldUsername) {
   if (e) e.preventDefault();
-  let username = document.getElementById('edit-user-username').value.trim();
-  let nik = document.getElementById('edit-user-nik').value.trim();
-  let role = document.getElementById('edit-user-role').value;
-  let password = document.getElementById('edit-user-password').value.trim();
+  let usernameEl = document.getElementById('edit-user-username');
+  let nikEl = document.getElementById('edit-user-nik');
+  let roleEl = document.getElementById('edit-user-role');
+  let passwordEl = document.getElementById('edit-user-password');
+
+  if (!usernameEl || !roleEl) return;
+
+  let username = usernameEl.value.trim();
+  let nik = nikEl ? nikEl.value.trim() : '';
+  let role = roleEl.value;
+  let password = passwordEl ? passwordEl.value.trim() : '';
 
   if (!username) {
     showUIToast('Username tidak boleh kosong!', 'error');
@@ -2228,8 +2235,10 @@ async function simpanEditUserAkun(e, oldUsername) {
   if (res && res.status === 'success') {
     showUIToast(`Akun '${username}' berhasil diperbarui!`, 'success');
     let formModal = document.getElementById('formModal');
-    let modalInstance = bootstrap.Modal.getInstance(formModal);
-    if (modalInstance) modalInstance.hide();
+    if (formModal) {
+      let modalInstance = bootstrap.Modal.getInstance(formModal);
+      if (modalInstance) modalInstance.hide();
+    }
     renderPengaturanRTView();
   } else {
     showUIToast('Gagal mengedit user: ' + (res ? res.message : 'Error'), 'error');
