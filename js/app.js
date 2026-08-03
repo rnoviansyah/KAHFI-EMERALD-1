@@ -609,6 +609,21 @@ async function callGASPost(actionName, extraPayload = {}) {
       return { status: 'success', message: 'Password user berhasil direset!' };
     }
 
+    if (actionName === 'editUserAkun') {
+      if (session.role !== 'RT') return { status: 'error', message: 'Hanya RT yang diizinkan mengedit user!' };
+      let updatePayload = {
+        username: extraPayload.username,
+        nik: extraPayload.nik,
+        role: extraPayload.role
+      };
+      if (extraPayload.password) {
+        updatePayload.password = extraPayload.password;
+      }
+      const { error } = await safeSupabaseUpdate('Users', updatePayload, 'username', extraPayload.oldUsername);
+      if (error) return { status: 'error', message: error.message };
+      return { status: 'success', message: 'Data user berhasil diperbarui!' };
+    }
+
     return { status: 'error', message: 'Aksi POST tidak dikenal' };
   } catch (err) {
     console.error('Fetch Error (POST):', err);
@@ -2130,6 +2145,82 @@ async function hapusUserAkun(username) {
   }, 'Hapus Akun User');
 }
 
+function bukaModalEditUser(uName, uNik, uRole) {
+  let modalTitle = document.getElementById('formModalTitle');
+  let dynamicForm = document.getElementById('dynamicForm');
+  let btnHapus = document.getElementById('btn-hapus-modal');
+  
+  if (modalTitle) modalTitle.innerText = `Edit Akun User: ${uName}`;
+  if (btnHapus) btnHapus.style.display = 'none';
+
+  let cleanNik = (uNik === '-' || uNik === 'undefined') ? '' : uNik;
+
+  let html = `
+    <form onsubmit="simpanEditUserAkun(event, '${uName}')" class="space-y-3 text-xs">
+      <div>
+        <label class="font-bold text-gray-700 mb-1 block">Username</label>
+        <input type="text" id="edit-user-username" value="${uName}" class="w-full p-2 border rounded-xl bg-white" required>
+      </div>
+      <div>
+        <label class="font-bold text-gray-700 mb-1 block">NIK Warga (Opsional)</label>
+        <input type="text" id="edit-user-nik" value="${cleanNik}" class="w-full p-2 border rounded-xl bg-white" placeholder="Sesuai KTP Warga">
+      </div>
+      <div>
+        <label class="font-bold text-gray-700 mb-1 block">Role User</label>
+        <select id="edit-user-role" class="w-full p-2 border rounded-xl bg-white">
+          <option value="Warga" ${uRole === 'Warga' ? 'selected' : ''}>Warga</option>
+          <option value="RT" ${uRole === 'RT' ? 'selected' : ''}>RT / Admin</option>
+        </select>
+      </div>
+      <div>
+        <label class="font-bold text-gray-700 mb-1 block">Password Baru (Opsional)</label>
+        <input type="password" id="edit-user-password" class="w-full p-2 border rounded-xl bg-white" placeholder="Kosongkan jika tidak ingin ganti password">
+      </div>
+      <div class="pt-2 flex gap-2">
+        <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white p-2.5 rounded-xl font-bold shadow transition">Simpan Perubahan</button>
+      </div>
+    </form>
+  `;
+
+  if (dynamicForm) dynamicForm.innerHTML = html;
+  
+  let formModal = document.getElementById('formModal');
+  let modalInstance = bootstrap.Modal.getInstance(formModal) || new bootstrap.Modal(formModal);
+  modalInstance.show();
+}
+
+async function simpanEditUserAkun(e, oldUsername) {
+  if (e) e.preventDefault();
+  let username = document.getElementById('edit-user-username').value.trim();
+  let nik = document.getElementById('edit-user-nik').value.trim();
+  let role = document.getElementById('edit-user-role').value;
+  let password = document.getElementById('edit-user-password').value.trim();
+
+  if (!username) {
+    showUIToast('Username tidak boleh kosong!', 'error');
+    return;
+  }
+
+  let payload = {
+    oldUsername: oldUsername,
+    username: username,
+    nik: nik,
+    role: role,
+    password: password
+  };
+
+  const res = await callGASPost('editUserAkun', payload);
+  if (res && res.status === 'success') {
+    showUIToast(`Akun '${username}' berhasil diperbarui!`, 'success');
+    let formModal = document.getElementById('formModal');
+    let modalInstance = bootstrap.Modal.getInstance(formModal);
+    if (modalInstance) modalInstance.hide();
+    renderPengaturanRTView();
+  } else {
+    showUIToast('Gagal mengedit user: ' + (res ? res.message : 'Error'), 'error');
+  }
+}
+
 async function simpanPengumumanWarga(e) {
   e.preventDefault();
   let teks = document.getElementById('set-info-warga').value;
@@ -2455,6 +2546,7 @@ async function renderPengaturanRTView() {
           <td class="p-2 font-mono">${uNik}</td>
           <td class="p-2"><span class="badge ${uRole.toUpperCase()==='RT'?'bg-primary':'bg-secondary'}">${uRole}</span></td>
           <td class="p-2 text-center">
+            <button onclick="bukaModalEditUser('${uName}', '${uNik}', '${uRole}')" class="btn btn-sm btn-outline-primary text-[10px] py-0 px-2 fw-bold me-1" title="Edit Akun"><i class="bi bi-pencil-square me-1"></i>Edit</button>
             <button onclick="resetPasswordUser('${uName}')" class="btn btn-sm btn-outline-warning text-[10px] py-0 px-2 fw-bold me-1" title="Reset Password"><i class="bi bi-key me-1"></i>Reset Pass</button>
             <button onclick="hapusUserAkun('${uName}')" class="btn btn-sm btn-outline-danger text-[10px] py-0 px-2 fw-bold" title="Hapus Akun"><i class="bi bi-trash"></i></button>
           </td>
