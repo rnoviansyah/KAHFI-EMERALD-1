@@ -1746,12 +1746,24 @@ let appSettings = {
 // Fitur: Update manifest PWA secara dinamis dari settings
 function updateDynamicManifest() {
   try {
+    let baseUrl = window.location.origin + window.location.pathname.substring(0, window.location.pathname.lastIndexOf('/') + 1);
+    let absStartUrl = baseUrl + 'index.html';
+    let absScope = baseUrl;
+
+    let logoUrl = appSettings.app_logo || 'https://file.aiquickdraw.com/imgcompressed/img/compressed_517f8d7424520a05c902d8a1c25e1ab6.webp';
+    let mimeType = 'image/webp';
+    if (logoUrl.startsWith('data:image/png')) mimeType = 'image/png';
+    else if (logoUrl.startsWith('data:image/jpeg') || logoUrl.startsWith('data:image/jpg')) mimeType = 'image/jpeg';
+    else if (logoUrl.startsWith('data:image/svg')) mimeType = 'image/svg+xml';
+    else if (logoUrl.endsWith('.png')) mimeType = 'image/png';
+    else if (logoUrl.endsWith('.jpg') || logoUrl.endsWith('.jpeg')) mimeType = 'image/jpeg';
+
     let manifestData = {
       name: appSettings.app_title || 'KAHFI EMERALD 1 RT 008/006',
       short_name: appSettings.app_short_name || 'KAHFI EMERALD 1',
-      description: (appSettings.app_subtitle || 'Aplikasi Layanan Warga RT'),
-      start_url: './index.html',
-      scope: './',
+      description: (appSettings.app_subtitle || 'HAPPINES STARTS RIGHT HERE'),
+      start_url: absStartUrl,
+      scope: absScope,
       display: 'standalone',
       orientation: 'portrait-primary',
       background_color: '#ffffff',
@@ -1759,16 +1771,22 @@ function updateDynamicManifest() {
       lang: 'id',
       icons: [
         {
-          src: appSettings.app_logo || 'https://file.aiquickdraw.com/imgcompressed/img/compressed_517f8d7424520a05c902d8a1c25e1ab6.webp',
+          src: logoUrl,
           sizes: '192x192',
-          type: 'image/webp',
-          purpose: 'any'
+          type: mimeType,
+          purpose: 'any maskable'
         },
         {
-          src: appSettings.app_logo || 'https://file.aiquickdraw.com/imgcompressed/img/compressed_517f8d7424520a05c902d8a1c25e1ab6.webp',
+          src: logoUrl,
+          sizes: '512x512',
+          type: mimeType,
+          purpose: 'any maskable'
+        },
+        {
+          src: 'https://file.aiquickdraw.com/imgcompressed/img/compressed_517f8d7424520a05c902d8a1c25e1ab6.webp',
           sizes: '512x512',
           type: 'image/webp',
-          purpose: 'any'
+          purpose: 'any maskable'
         }
       ]
     };
@@ -2494,8 +2512,81 @@ window.addEventListener('beforeinstallprompt', (e) => {
 function installPWA() {
   if (deferredPrompt) {
     deferredPrompt.prompt();
-    deferredPrompt.userChoice.then(c => { if (c.outcome === 'accepted') console.log('PWA Installed!'); deferredPrompt = null; });
+    deferredPrompt.userChoice.then(c => {
+      if (c.outcome === 'accepted') {
+        console.log('PWA Installed!');
+        if (typeof showUIToast === 'function') showUIToast('Aplikasi berhasil dipasang di Layar Utama HP/Komputer!', 'success');
+      }
+      deferredPrompt = null;
+    });
+  } else {
+    tampilkanModalPanduanInstallPWA();
   }
+}
+
+function tampilkanModalPanduanInstallPWA() {
+  let modalEl = document.getElementById('modalPanduanPWA');
+  if (!modalEl) {
+    let div = document.createElement('div');
+    div.innerHTML = `
+      <div class="modal fade" id="modalPanduanPWA" tabindex="-1" aria-hidden="true" style="z-index: 1095;">
+        <div class="modal-dialog modal-dialog-centered">
+          <div class="modal-content border-0 shadow-lg rounded-4 overflow-hidden">
+            <div class="modal-header bg-primary text-white p-3">
+              <h6 class="modal-title font-bold text-sm" id="modalPwaTitle"><i class="bi bi-download me-2"></i>Panduan Install / Install Ulang PWA</h6>
+              <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body p-4 text-start font-sans" id="modalPwaBody"></div>
+            <div class="modal-footer bg-light p-2 text-center">
+              <button type="button" class="btn btn-sm btn-primary font-bold px-4 rounded-2 w-100" data-bs-dismiss="modal">Mengerti</button>
+            </div>
+          </div>
+        </div>
+      </div>`;
+    document.body.appendChild(div.firstElementChild);
+    modalEl = document.getElementById('modalPanduanPWA');
+  }
+
+  let isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+  let isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
+  let bodyHtml = '';
+
+  if (isIOS) {
+    bodyHtml = `
+      <div class="text-xs space-y-2">
+        <p class="fw-bold text-dark mb-2"><i class="bi bi-apple me-1 text-secondary"></i> Cara Install di iPhone / iPad (Safari):</p>
+        <ol class="ps-3 text-muted space-y-1">
+          <li>Buka website ini di browser <b>Safari</b>.</li>
+          <li>Klik tombol <b>Bagikan / Share</b> (<i class="bi bi-box-arrow-up text-primary"></i> di navigasi Safari).</li>
+          <li>Pilih menu <b>"Tambah ke Layar Utama" (Add to Home Screen)</b>.</li>
+          <li>Klik <b>Tambah</b> di kanan atas.</li>
+        </ol>
+      </div>`;
+  } else if (isMobile) {
+    bodyHtml = `
+      <div class="text-xs space-y-2">
+        <p class="fw-bold text-dark mb-2"><i class="bi bi-android2 me-1 text-success"></i> Cara Install / Install Ulang di HP Android (Chrome):</p>
+        <ol class="ps-3 text-muted space-y-1">
+          <li>Klik menu <b>Titik Tiga (⋮)</b> di pojok kanan atas browser Chrome.</li>
+          <li>Pilih opsi <b>"Tambahkan ke Layar Utama"</b> atau <b>"Install Aplikasi"</b>.</li>
+          <li>Klik <b>Install / Tambah</b> untuk memasang kembali ikon aplikasi di HP Anda.</li>
+        </ol>
+      </div>`;
+  } else {
+    bodyHtml = `
+      <div class="text-xs space-y-2">
+        <p class="fw-bold text-dark mb-2"><i class="bi bi-display me-1 text-primary"></i> Cara Install / Install Ulang di Laptop / Komputer (Chrome/Edge):</p>
+        <ol class="ps-3 text-muted space-y-1">
+          <li>Lihat bagian kanan <b>Address Bar (URL)</b> di bagian atas browser.</li>
+          <li>Klik ikon <b>Install ⊕</b> (atau ikon komputer kecil).</li>
+          <li>Atau klik <b>Titik Tiga (⋮)</b> di kanan atas ➔ <b>"Simpan & Bagikan"</b> ➔ <b>"Install Aplikasi..."</b>.</li>
+        </ol>
+      </div>`;
+  }
+
+  document.getElementById('modalPwaBody').innerHTML = bodyHtml;
+  let bsModal = new bootstrap.Modal(modalEl);
+  bsModal.show();
 }
 
 // ==========================================================
