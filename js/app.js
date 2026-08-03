@@ -95,8 +95,25 @@ function showUIConfirm(text, onConfirm, title = "Konfirmasi Tindakan") {
 window.showUIConfirm = showUIConfirm;
 window.showUIToast = showUIToast;
 
-// Variable Global Core App
-let session = { token: '', role: '', nik: '', nama: '', alamat: '', noHp: '' };
+// Variable Global Core App (Tamper-Resistant Session Proxy)
+let _rawSession = { token: '', role: '', nik: '', nama: '', alamat: '', noHp: '' };
+let session = new Proxy(_rawSession, {
+  set(target, prop, value) {
+    if (prop === 'role') {
+      try {
+        let savedRaw = localStorage.getItem('rt_user_session');
+        if (savedRaw) {
+          let saved = JSON.parse(savedRaw);
+          let realRole = (saved.role || 'Warga').toString().toUpperCase() === 'RT' ? 'RT' : 'Warga';
+          target[prop] = realRole;
+          return true;
+        }
+      } catch(e){}
+    }
+    target[prop] = value;
+    return true;
+  }
+});
 function getNoWaAdmin() {
   let customNo = (typeof appSettings !== 'undefined' && appSettings && appSettings.rt_wa_number) ? appSettings.rt_wa_number : '';
   if (customNo && String(customNo).trim() !== '') {
@@ -181,9 +198,14 @@ async function safeSupabaseSelect(tableName) {
 }
 
 async function safeSupabaseInsert(tableName, rows) {
+  let lowerName = tableName.toLowerCase();
+  if (['warga', 'users', 'pengaturan', 'keuangan'].includes(lowerName)) {
+    if (!(await isVerifiedRT())) {
+      return { error: { message: 'Akses ditolak! Sesi Anda bukan RT terverifikasi di database.' } };
+    }
+  }
   let { error } = await db.from(tableName).insert(rows);
   if (error) {
-    let lowerName = tableName.toLowerCase();
     if (lowerName !== tableName) {
       let resLower = await db.from(lowerName).insert(rows);
       if (!resLower.error) return { error: null };
@@ -243,11 +265,8 @@ async function isVerifiedRT() {
 
 async function safeSupabaseUpdate(tableName, payload, eqColumn, eqValue) {
   // Proteksi Keamanan Backend: Verifikasi token RT di Database
-  let lowerT = tableName.toLowerCase();
-  if (['warga', 'users', 'pengaturan', 'keuangan'].includes(lowerT)) {
-    if (!(await isVerifiedRT())) {
-      return { error: { message: 'Akses ditolak! Sesi Anda bukan RT terverifikasi di database.' } };
-    }
+  if (!(await isVerifiedRT())) {
+    return { error: { message: 'Akses ditolak! Sesi Anda bukan RT terverifikasi di database.' } };
   }
 
   // Sanitasi payload dari field kosong bernilai bigint/numeric
@@ -478,6 +497,11 @@ async function callGASPost(actionName, extraPayload = {}) {
 
     if (actionName === 'simpanDataKeSheet') {
       const sheetName = extraPayload.sheetName;
+      if (['Warga', 'Users', 'Pengaturan', 'Keuangan', 'Aset'].includes(sheetName)) {
+        if (!(await isVerifiedRT())) {
+          return { status: 'error', message: 'Akses ditolak! Sesi Anda bukan RT terverifikasi di database.' };
+        }
+      }
       let formData = { ...extraPayload.formData };
       if (!formData.id) formData.id = sheetName.substring(0,3).toUpperCase() + '-' + Math.floor(1000 + Math.random() * 9000);
       if (session.role !== 'RT' && sheetName !== 'Iuran' && sheetName !== 'Aspirasi') formData['nik'] = session.nik;
@@ -558,19 +582,12 @@ async function callGASPost(actionName, extraPayload = {}) {
     }
 
     if (actionName === 'updateDataDiSheet') {
+      if (!(await isVerifiedRT())) {
+        return { status: 'error', message: 'Akses ditolak! Sesi Anda bukan RT terverifikasi di database.' };
+      }
       const sheetName = extraPayload.sheetName;
       const id = extraPayload.id;
       let formData = sanitizeFormData(sheetName, extraPayload.formData);
-
-      let isRT = await isVerifiedRT();
-      if (!isRT) {
-        if (['Warga', 'Users', 'Pengaturan', 'Keuangan'].includes(sheetName)) {
-          return { status: 'error', message: 'Akses ditolak! Sesi Anda bukan RT terverifikasi di database.' };
-        }
-        // Warga tidak diizinkan mengubah status aduan/surat/aset orang lain
-        if (formData.status) delete formData.status;
-        if (formData.status_barang) delete formData.status_barang;
-      }
 
       let resUpdate = await safeSupabaseUpdate(sheetName, formData, 'id', id);
       if (resUpdate.error && sheetName.toLowerCase() === 'warga') {
