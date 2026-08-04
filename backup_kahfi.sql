@@ -1,4 +1,6 @@
--- SISTEM INFORMASI RT 5
+-- ============================================================
+-- BACKUP SKEMA DATABASE FULL + OTOMATISASI RLS & POLICY (PRECISE QUOTED)
+-- KAHFI EMERALD 1 RT 008/006
 -- ============================================================
 
 -- 1. Tabel Users (Akun Login Pengguna & Admin)

@@ -1,7 +1,7 @@
 {
-  "name": "SISTEM INFORMASI RT 5",
-  "short_name": "RT 5",
-  "description": "Aplikasi Layanan dan Informasi Warga SISTEM INFORMASI RT 5 - AMAN, BERSIH, MODERN, TRANSPARAN DAN EFISIEN",
+  "name": "KAHFI EMERALD 1 RT 008/006",
+  "short_name": "KAHFI EMERALD 1",
+  "description": "Aplikasi Layanan dan Informasi Warga KAHFI EMERALD 1 RT 008/006 - HAPPINES STARTS RIGHT HERE",
   "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",
@@ -12,15 +12,15 @@
   "categories": ["utilities", "productivity"],
   "icons": [
     {
-      "src": "./img/logo.webp",
+      "src": "./img/logo.jpg",
       "sizes": "192x192",
-      "type": "image/webp",
+      "type": "image/jpeg",
       "purpose": "any"
     },
     {
-      "src": "./img/logo.webp",
+      "src": "./img/logo.jpg",
       "sizes": "512x512",
-      "type": "image/webp",
+      "type": "image/jpeg",
       "purpose": "any"
     }
   ],

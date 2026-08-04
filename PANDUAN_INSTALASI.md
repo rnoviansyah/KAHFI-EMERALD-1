@@ -36,7 +36,7 @@ Panduan ini berisi langkah-langkah mudah dan praktis untuk melakukan instalasi d
 
 ## 🔗 LANGKAH 2: HUBUNGKAN APLIKASI KE SUPABASE (1 MENIT)
 
-1. Buka file [`js/app.js`](file:///C:/Users/LENOVO/Downloads/rt%205/js/app.js) di text editor (VS Code / Notepad).
+1. Buka file [`js/app.js`](file:///C:/Users/LENOVO/Downloads/kahfi/js/app.js) di text editor (VS Code / Notepad).
 2. Cari baris berikut di bagian atas file (sekitar baris 137–141):
 
 ```javascript
