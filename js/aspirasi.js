@@ -1,7 +1,3 @@
-// ==========================================================
-// ==== MODUL ASPIRASI & KOTAK SARAN ANONIM =================
-// ==========================================================
-
 function renderAspirasiView(data) {
   let rows = data.rows || [];
   let isRt = session && session.role === 'RT';

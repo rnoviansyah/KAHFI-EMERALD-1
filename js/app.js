@@ -1,6 +1,3 @@
-// ==========================================================
-// ==== CUSTOM UI TOAST & CONFIRM MODAL (NO BROWSER POPUPS) =
-// ==========================================================
 function showUIToast(message, type = 'auto') {
   if (!message) return;
   let strMsg = String(message).trim();
@@ -149,10 +146,6 @@ const MENU_CACHE_TTL = 30000; // 30 detik
 
 const DEFAULT_LOGO_BASE64 = "data:image/jpeg;base64,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";
 
-// ==========================================================
-// ==== KONFIGURASI DATABASE SUPABASE =======================
-// ==========================================================
-// Key dibagi agar tidak langsung terbaca sebagai satu string
 const _k1 = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9';
 const _k2 = '.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inp5dGZnbXV1cHVqZ2x1dnZqcWxxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODU3NTk4ODQsImV4cCI6MjEwMTMzNTg4NH0';
 const _k3 = '.oncnLpn4S51uz72E6zZnfrOyk3fvO57MMQa4k0HFh5g';
@@ -429,9 +422,6 @@ function convertToImageLink(url) {
   return url;
 }
 
-// ==========================================================
-// ==== HELPER FETCH POST (SUPABASE BRIDGE) =================
-// ==========================================================
 async function callGASPost(actionName, extraPayload = {}) {
   try {
     // 1. Process Login (SERVER-SIDE VIA RPC DENGAN FALLBACK FAILSAFE)
@@ -688,7 +678,6 @@ async function callGASPost(actionName, extraPayload = {}) {
   }
 }
 
-// ==========================================================
 function sortDataNewestFirst(dataList) {
   if (!Array.isArray(dataList) || dataList.length <= 1) return dataList || [];
   let list = [...dataList];
@@ -732,9 +721,6 @@ function sensorPhoneNumber(hp) {
 
 window.sensorPhoneNumber = sensorPhoneNumber;
 
-// ==========================================================
-// ==== HELPER FETCH GET (SUPABASE BRIDGE) ==================
-// ==========================================================
 async function callGASGet(actionName, params = {}) {
   try {
     if (actionName === 'getDaftarBarangAset') {
@@ -853,9 +839,6 @@ const FALLBACK_HEADERS = {
       return { status: 'success', headers: headers, rows: rows };
     }
 
-    // ==========================================================
-    // ==== GET NOTIFICATIONS (REALTIME - KEBAL NAMA KOLOM) =====
-    // ==========================================================
     if (actionName === 'getNotifications') {
       const cleanRole = (session.role || 'warga').toLowerCase();
       const userNik = (session.nik || '').toString().trim();
@@ -870,16 +853,13 @@ const FALLBACK_HEADERS = {
         safeSupabaseSelect('Aspirasi')
       ]);
 
-      // Fix #6: Ekstrak tanggal lebih agresif — loop semua key cari timestamp valid
       const extractDate = (item) => {
         if (!item || typeof item !== 'object') return null;
-        // Cek kolom-kolom umum dulu
         const commonKeys = ['created_at', 'createdat', 'updated_at', 'timestamp', 'waktu', 'tanggal', 'tanggal_bayar', 'tanggal_pindah', 'tanggal_lahir', 'tanggal_meninggal', 'tgl', 'date', 'datetime'];
         for (let k of commonKeys) {
           let v = item[k] || item[k.toUpperCase()];
           if (v) { let d = new Date(v); if (!isNaN(d.getTime()) && d.getFullYear() > 2000) return v; }
         }
-        // Loop semua key cari nilai yang bisa jadi tanggal valid
         for (let key of Object.keys(item)) {
           let v = item[key];
           if (!v || typeof v !== 'string' || v.length < 6) continue;
@@ -1116,9 +1096,6 @@ const FALLBACK_HEADERS = {
   }
 }
 
-// ==========================================================
-// ==== NOTIFIKASI REALTIME (SOUND, WEBSOCKET, PUSH) ========
-// ==========================================================
 function playNotifSound() {
   try {
     const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
@@ -1240,7 +1217,6 @@ async function fetchNotifikasi(isRealtimeTrigger = false) {
 
     localStorage.setItem('rt_notif_times_' + session.nik, JSON.stringify(savedTimestamps));
 
-    // Urutkan notifikasi dari TERBARU ke TERLAMA
     rawNotifData.sort((a, b) => (b.timestampMs || 0) - (a.timestampMs || 0));
 
     let unreadCount = rawNotifData.length;
@@ -1305,9 +1281,6 @@ function bukaNotifTarget(menuName) {
   loadMenu(menuName);
 }
 
-// ==========================================================
-// ==== AUTHENTICATION & SESSION ============================
-// ==========================================================
 async function saveSessionToDatabase(token, nik, role) {
   if (!token || !nik) return;
   let timeStr = new Date().toLocaleString('id-ID');
@@ -1382,7 +1355,6 @@ async function verifySessionToken() {
     delete menuDataCache['Sessions'];
     const { data: sessData, error } = await safeSupabaseSelect('Sessions');
     
-    // Jangan logout jika error koneksi
     if (error) return true;
 
     let match = (sessData || []).find(s => {
@@ -1390,7 +1362,6 @@ async function verifySessionToken() {
       return String(sTok).trim() === String(session.token).trim();
     });
 
-    // Jika token terbukti sudah dihapus dari DB oleh RT, logout seketika!
     if (!match && Array.isArray(sessData)) {
       if (notifTimer) clearInterval(notifTimer);
       localStorage.removeItem('rt_user_session');
@@ -1461,7 +1432,6 @@ async function checkExistingSession() {
     try {
       let parsed = JSON.parse(savedSession);
       if (parsed && parsed.token && parsed.role) {
-        // Restore sesi langsung dari localStorage agar saat di-refresh TIDAK LOGOUT!
         session.token     = parsed.token;
         session.role      = (parsed.role.toString().toUpperCase() === 'RT') ? 'RT' : 'Warga';
         session.nik       = parsed.nik || '';
@@ -1488,9 +1458,6 @@ function syncActiveNav(menu) {
   if (mEl) mEl.classList.add('active');
 }
 
-// ==========================================================
-// ==== NAVIGASI MENU =======================================
-// ==========================================================
 async function loadMenu(menu) {
   if (session && session.token) {
     let isSessionValid = await verifySessionToken();
@@ -1525,7 +1492,6 @@ async function loadMenu(menu) {
       return;
   }
 
-  // Fix #3/#4: Gunakan cache jika data masih fresh (< 30 detik)
   let cacheKey = menu;
   let cached = menuDataCache[cacheKey];
   let now = Date.now();
@@ -1533,7 +1499,6 @@ async function loadMenu(menu) {
     currentHeaders = cached.data.headers || [];
     currentRows    = cached.data.rows    || [];
     renderTable(cached.data, menu);
-    // Refresh cache di background
     callGASGet('getTableData', { sheetName: menu }).then(res => {
       if (res && res.status === 'success') menuDataCache[cacheKey] = { data: res, timestamp: Date.now() };
     });
@@ -1553,9 +1518,6 @@ async function loadMenu(menu) {
   }
 }
 
-// ==========================================================
-// ==== RENDER TABLE ========================================
-// ==========================================================
 function renderTable(data, menu) {
   let html = '';
   let bolehTambah = session.role === 'RT' || (session.role === 'Warga' && ['Pengaduan','SuratPengantar','Sumbangan','Aset','Peminjaman','Aspirasi'].includes(menu));
@@ -1600,7 +1562,7 @@ function bukaPopUpFoto(urlImg) {
 
 async function bukaModalForm() {
   editingId = null;
-  editingNik = null; // Wajib reset editingNik agar Tambah Data Baru tidak dianggap Edit!
+  editingNik = null;
   document.getElementById('formModalTitle').innerText = "Form Input: " + currentActiveMenu;
   document.getElementById('btn-hapus-modal').style.display = 'none';
   await generateFormInputs(null);
@@ -1610,7 +1572,7 @@ async function bukaModalForm() {
 
 async function bukaModalEdit(id) {
   editingId = id;
-  editingNik = null; // Reset backup NIK
+  editingNik = null;
   document.getElementById('formModalTitle').innerText = "Edit Data: " + currentActiveMenu;
   document.getElementById('btn-hapus-modal').style.display = session.role === 'RT' ? 'inline-block' : 'none';
 
@@ -1624,7 +1586,6 @@ async function bukaModalEdit(id) {
     return false;
   });
 
-  // Fix #2: Simpan NIK sebagai backup identifier untuk tabel Warga
   if (rowData && currentActiveMenu === 'Warga') {
     let headers = (currentHeaders || []).map(h => (h || '').toLowerCase());
     let nikIdx = headers.indexOf('nik');
@@ -1909,9 +1870,6 @@ function filterTable() {
   });
 }
 
-// ==========================================================
-// ==== MODUL PENGATURAN RT & SISTEM (THEME, QRIS, USERS) ===
-// ==========================================================
 let appSettings = {
   app_title: 'KAHFI EMERALD 1 RT 008/006',
   app_short_name: 'KAHFI EMERALD 1',
@@ -1929,7 +1887,6 @@ let appSettings = {
   info_warga: ''
 };
 
-// Fitur: Update manifest PWA secara dinamis dari settings
 function updateDynamicManifest() {
   try {
     let baseUrl = window.location.origin + window.location.pathname.substring(0, window.location.pathname.lastIndexOf('/') + 1);
@@ -1983,7 +1940,6 @@ function updateDynamicManifest() {
       link.href = manifestUrl;
       document.head.appendChild(link);
     }
-    // Update theme-color meta
     let themeColorMeta = document.querySelector('meta[name="theme-color"]');
     if (themeColorMeta) themeColorMeta.content = appSettings.app_theme_color || '#1e3a8a';
   } catch(e) {
@@ -2023,7 +1979,6 @@ async function loadAppSettings() {
 
     applyTheme(appSettings.app_theme || 'blue');
     renderHeaderRekeningInfo();
-    // Update manifest PWA dinamis setelah settings dimuat
     updateDynamicManifest();
   } catch(e) {
     console.error('Gagal memuat pengaturan:', e);
@@ -2451,7 +2406,6 @@ async function renderPengaturanRTView() {
         </div>
 
         <div class="card-body p-4">
-          <!-- TAB 1: IDENTITAS & TEMA -->
           <div id="tab-content-tema" class="setting-tab-panel">
             <h5 class="fw-bold text-primary mb-3"><i class="bi bi-sliders me-2"></i>Pengaturan Identitas, Tema & PWA</h5>
             <form onsubmit="simpanIdentitasDanTema(event)">
@@ -2467,7 +2421,6 @@ async function renderPengaturanRTView() {
                 </div>
               </div>
 
-              <!-- Preview PWA -->
               <div class="mb-4 p-3 bg-gray-50 border rounded-xl">
                 <p class="text-xs font-bold text-gray-600 mb-2"><i class="bi bi-phone me-1"></i> Preview Tampilan di Home Screen HP (PWA)</p>
                 <div class="d-flex align-items-center gap-3">
@@ -2502,7 +2455,7 @@ async function renderPengaturanRTView() {
                   <div class="p-3 bg-light border rounded-3 mb-2">
                     <div class="d-flex align-items-center gap-3">
                       <div class="text-center">
-                        <img id="preview-logo-upload" src="${appSettings.app_logo || DEFAULT_LOGO_BASE64}" alt="Preview Logo" class="rounded-circle border shadow-sm app-logo-img" style="width: 55px; height: 55px; object-fit: cover;">
+                        <img id="preview-logo-upload" src="${appSettings.app_logo || './img/logo.jpg'}" alt="Preview Logo" class="rounded-circle border shadow-sm app-logo-img" style="width: 55px; height: 55px; object-fit: cover;">
                         <small class="d-block text-[9px] text-gray-500 mt-1 font-bold">Pratinjau</small>
                       </div>
                       <div class="flex-grow-1 space-y-2">
@@ -2567,7 +2520,6 @@ async function renderPengaturanRTView() {
             </form>
           </div>
 
-          <!-- TAB 2: REKENING & QRIS -->
           <div id="tab-content-rekening" class="setting-tab-panel d-none">
             <h5 class="fw-bold text-primary mb-3"><i class="bi bi-wallet2 me-2"></i>Pengaturan QRIS Dinamis & Rekening Pembayaran</h5>
             <form onsubmit="simpanRekeningDanQRIS(event)">
@@ -2627,7 +2579,6 @@ async function renderPengaturanRTView() {
             </form>
           </div>
 
-          <!-- TAB 3: MANAJEMEN AKUN WARGA -->
           <div id="tab-content-users" class="setting-tab-panel d-none">
             <h5 class="fw-bold text-primary mb-3"><i class="bi bi-person-plus-fill me-2"></i>Registrasi & Manajemen Akun Login Warga</h5>
             
@@ -2701,7 +2652,6 @@ async function renderPengaturanRTView() {
             </div>
           </div>
 
-          <!-- TAB 5: MANAJEMEN SESI LOGIN WARGA -->
           <div id="tab-content-sesi" class="setting-tab-panel d-none">
             <div class="d-flex justify-content-between align-items-center mb-3">
               <div>
@@ -2759,7 +2709,6 @@ async function renderPengaturanRTView() {
             </div>
           </div>
 
-          <!-- TAB 4: PENGUMUMAN WARGA -->
           <div id="tab-content-info" class="setting-tab-panel d-none">
             <h5 class="fw-bold text-primary mb-3"><i class="bi bi-megaphone me-2"></i>Pengumuman & Running Text Dashboard</h5>
             <form onsubmit="simpanPengumumanWarga(event)">
@@ -2777,9 +2726,6 @@ async function renderPengaturanRTView() {
   document.getElementById('main-content').innerHTML = html;
 }
 
-// ==========================================================
-// ==== DOM READY ===========================================
-// ==========================================================
 document.addEventListener("DOMContentLoaded", function() {
   try {
     let fastLogo = localStorage.getItem('cached_app_logo');
@@ -2801,7 +2747,6 @@ document.addEventListener("visibilitychange", function() {
   if (document.visibilityState === "visible" && session.token) fetchNotifikasi();
 });
 
-// PWA Service Worker
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
     navigator.serviceWorker.register('./sw.js')
@@ -2898,11 +2843,5 @@ function tampilkanModalPanduanInstallPWA() {
   bsModal.show();
 }
 
-// ==========================================================
-// ==== EASTER EGG ==========================================
-// ==========================================================
 console.log("%cMAU NGAPAIN LU? 🤨", "color:#ef4444;font-size:38px;font-weight:900;padding:10px;");
 console.log("%cMending bayar iuran KAHFI EMERALD 1 daripada ngintipin console 🤣", "color:#2563eb;font-size:14px;font-weight:bold;");
-
-// Fix #1: Hapus blokir DevTools yang tidak efektif (mudah dibypass, ganggu debugging)
-// Context menu & DevTools shortcut dibiarkan terbuka untuk keperluan maintenance RT
