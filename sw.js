@@ -31,7 +31,6 @@ const NEVER_CACHE = [
   'supabase.co',
   'cdn.jsdelivr.net',
   'cdn.tailwindcss.com',
-  'aiquickdraw.com',
   'lh3.googleusercontent.com',
   'drive.google.com',
   'wa.me'
