@@ -172,23 +172,11 @@ function renderListBulanDatabase(rows, headers) {
     let badgeHtml = '';
 
     if (isLunas) {
-      if (session.role === 'RT') {
-        badgeHtml = `
-          <div class="text-right flex flex-col items-end gap-1">
-            <div class="flex items-center gap-1">
-              <span class="bg-emerald-100 text-emerald-700 px-2.5 py-0.5 rounded-full text-[10px] font-bold">LUNAS</span>
-              <button onclick="bukaModalEditIuranRT('${rowId}')" title="Edit Tagihan" class="bg-amber-500 hover:bg-amber-600 text-white p-1 px-2 rounded-lg text-[10px] font-bold shadow transition flex items-center gap-1"><i class="bi bi-pencil-square"></i> Edit</button>
-              <button onclick="hapusIuranRT('${rowId}')" title="Hapus Tagihan" class="bg-rose-600 hover:bg-rose-700 text-white p-1 px-2 rounded-lg text-[10px] font-bold shadow transition flex items-center gap-1"><i class="bi bi-trash-fill"></i> Hapus</button>
-            </div>
-            <span class="block text-[9px] text-gray-400 mt-0.5"><i class="bi bi-clock me-1"></i>${tglBayar}</span>
-          </div>`;
-      } else {
-        badgeHtml = `
-          <div class="text-right">
-            <span class="bg-emerald-100 text-emerald-700 px-3 py-1 rounded-full text-[10px] font-bold">LUNAS</span>
-            <span class="block text-[9px] text-gray-400 mt-0.5"><i class="bi bi-clock me-1"></i>${tglBayar}</span>
-          </div>`;
-      }
+      badgeHtml = `
+        <div class="text-right">
+          <span class="bg-emerald-100 text-emerald-700 px-3 py-1 rounded-full text-[10px] font-bold">LUNAS</span>
+          <span class="block text-[9px] text-gray-400 mt-0.5"><i class="bi bi-clock me-1"></i>${tglBayar}</span>
+        </div>`;
     } else if (isMenunggu) {
       if (session.role === 'RT') {
         badgeHtml = `
