@@ -1161,7 +1161,11 @@ function initRealtimeNotif() {
     .channel('rt-realtime-notif')
     .on('postgres_changes', { event: '*', schema: 'public' }, (payload) => {
       console.log('⚡ Realtime Update Diterima:', payload.table);
-      fetchNotifikasi(true);
+      if (payload.table === 'Sessions' || payload.table === 'sessions') {
+        verifySessionToken();
+      } else {
+        fetchNotifikasi(true);
+      }
     })
     .subscribe((status) => {
       if (status === 'SUBSCRIBED') console.log('🟢 Supabase Realtime Listener Active!');
@@ -1368,20 +1372,20 @@ async function verifySessionToken() {
     delete menuDataCache['Sessions'];
     const { data: sessData, error } = await safeSupabaseSelect('Sessions');
     
-    // Jangan pernah logout paksa jika koneksi error atau data Sessions kosong/lag
-    if (error || !sessData || sessData.length === 0) return true;
+    // Jangan logout jika error koneksi
+    if (error) return true;
 
-    let match = sessData.find(s => {
+    let match = (sessData || []).find(s => {
       let sTok = s.token || s.TOKEN || '';
       return String(sTok).trim() === String(session.token).trim();
     });
 
-    // Logout HANYA jika tabel Sessions memang memiliki banyak sesi dan token ini terbukti dicabut RT
-    if (!match && sessData.length > 3) {
+    // Jika token terbukti sudah dihapus dari DB oleh RT, logout seketika!
+    if (!match && Array.isArray(sessData)) {
       if (notifTimer) clearInterval(notifTimer);
       localStorage.removeItem('rt_user_session');
-      alert('Sesi login Anda telah dihentikan oleh RT. Silakan login kembali.');
-      location.reload();
+      showUIToast('Sesi login Anda telah dihentikan oleh RT. Mengalihkan...', 'error');
+      setTimeout(() => location.reload(), 1000);
       return false;
     }
     return true;
