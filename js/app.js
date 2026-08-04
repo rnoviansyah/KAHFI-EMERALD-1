@@ -1143,21 +1143,22 @@ function requestNotifPermission() {
 function triggerNativeBrowserNotif(title, body) {
   if ('Notification' in window && Notification.permission === 'granted') {
     try {
+      let notifIcon = appSettings.app_logo || './img/logo.jpg';
       if (navigator.serviceWorker && navigator.serviceWorker.ready) {
         navigator.serviceWorker.ready.then(reg => {
           reg.showNotification(title, {
             body: body,
-            icon: 'https://file.aiquickdraw.com/imgcompressed/img/compressed_517f8d7424520a05c902d8a1c25e1ab6.webp',
-            badge: 'https://file.aiquickdraw.com/imgcompressed/img/compressed_517f8d7424520a05c902d8a1c25e1ab6.webp',
+            icon: notifIcon,
+            badge: notifIcon,
             vibrate: [200, 100, 200],
             tag: 'kahfi-notif-' + Date.now(),
             renotify: true
           });
         }).catch(() => {
-          new Notification(title, { body, icon: 'https://file.aiquickdraw.com/imgcompressed/img/compressed_517f8d7424520a05c902d8a1c25e1ab6.webp' });
+          new Notification(title, { body, icon: notifIcon });
         });
       } else {
-        new Notification(title, { body, icon: 'https://file.aiquickdraw.com/imgcompressed/img/compressed_517f8d7424520a05c902d8a1c25e1ab6.webp' });
+        new Notification(title, { body, icon: notifIcon });
       }
     } catch(e) {}
   }
@@ -1915,7 +1916,7 @@ let appSettings = {
   app_title: 'KAHFI EMERALD 1 RT 008/006',
   app_short_name: 'KAHFI EMERALD 1',
   app_subtitle: 'HAPPINES STARTS RIGHT HERE',
-  app_logo: 'https://file.aiquickdraw.com/imgcompressed/img/compressed_517f8d7424520a05c902d8a1c25e1ab6.webp',
+  app_logo: './img/logo.jpg',
   app_theme: 'blue',
   app_theme_color: '#1e3a8a',
   payment_rekening: JSON.stringify([
@@ -1935,13 +1936,14 @@ function updateDynamicManifest() {
     let absStartUrl = baseUrl + 'index.html';
     let absScope = baseUrl;
 
-    let logoUrl = appSettings.app_logo || DEFAULT_LOGO_BASE64;
-    let mimeType = 'image/webp';
+    let logoUrl = appSettings.app_logo || './img/logo.jpg';
+    let mimeType = 'image/jpeg';
     if (logoUrl.startsWith('data:image/png')) mimeType = 'image/png';
     else if (logoUrl.startsWith('data:image/jpeg') || logoUrl.startsWith('data:image/jpg')) mimeType = 'image/jpeg';
     else if (logoUrl.startsWith('data:image/svg')) mimeType = 'image/svg+xml';
     else if (logoUrl.endsWith('.png')) mimeType = 'image/png';
     else if (logoUrl.endsWith('.jpg') || logoUrl.endsWith('.jpeg')) mimeType = 'image/jpeg';
+    else if (logoUrl.endsWith('.webp')) mimeType = 'image/webp';
 
     let manifestData = {
       name: appSettings.app_title || 'KAHFI EMERALD 1 RT 008/006',
@@ -1965,12 +1967,6 @@ function updateDynamicManifest() {
           src: logoUrl,
           sizes: '512x512',
           type: mimeType,
-          purpose: 'any maskable'
-        },
-        {
-          src: 'https://file.aiquickdraw.com/imgcompressed/img/compressed_517f8d7424520a05c902d8a1c25e1ab6.webp',
-          sizes: '512x512',
-          type: 'image/webp',
           purpose: 'any maskable'
         }
       ]
