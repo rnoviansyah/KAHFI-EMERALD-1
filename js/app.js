@@ -1429,11 +1429,22 @@ async function checkExistingSession() {
   let savedSession = localStorage.getItem('rt_user_session');
   if (savedSession) {
     try {
-      session = JSON.parse(savedSession);
-      if (session && session.role) {
-        applySessionUI();
-        verifySessionToken();
+      let parsed = JSON.parse(savedSession);
+      if (parsed && parsed.token) {
+        // Cek langsung ke database Supabase apakah token ini valid dan terdaftar
+        const { data: sessData, error } = await db.from('Sessions').select('*').eq('token', parsed.token);
+        if (!error && sessData && sessData.length > 0) {
+          let dbRole = (sessData[0].role || sessData[0].ROLE || 'Warga').toString().trim();
+          session.token = parsed.token;
+          session.role = (dbRole.toUpperCase() === 'RT') ? 'RT' : 'Warga';
+          session.nik = sessData[0].nik || parsed.nik || '';
+          session.nama = parsed.nama || '';
+          applySessionUI();
+          return;
+        }
       }
+      // Jika token tidak ditemukan / palsu di DB, hapus localStorage dan tampilkan form login
+      localStorage.removeItem('rt_user_session');
     } catch(e) {
       localStorage.removeItem('rt_user_session');
     }
