@@ -218,8 +218,11 @@ async function isVerifiedRT() {
   }
 }
 async function safeSupabaseUpdate(tableName, payload, eqColumn, eqValue) {
-  if (!(await isVerifiedRT())) {
-    return { error: { message: 'Akses ditolak! Sesi Anda bukan RT terverifikasi di database.' } };
+  let lowerName = (tableName || '').toLowerCase();
+  if (['warga', 'users', 'pengaturan', 'keuangan'].includes(lowerName)) {
+    if (!(await isVerifiedRT())) {
+      return { error: { message: 'Akses ditolak! Sesi Anda bukan RT terverifikasi di database.' } };
+    }
   }
   payload = sanitizeFormData(tableName, payload);
   let cleanTable = tableName.charAt(0).toUpperCase() + tableName.slice(1);
@@ -227,7 +230,6 @@ async function safeSupabaseUpdate(tableName, payload, eqColumn, eqValue) {
   delete menuDataCache[tableName];
   let { data, error } = await db.from(tableName).update(payload).eq(eqColumn, eqValue).select();
   if (!error && data && data.length > 0) return { error: null };
-  let lowerName = tableName.toLowerCase();
   if (lowerName !== tableName) {
     let resLower = await db.from(lowerName).update(payload).eq(eqColumn, eqValue).select();
     if (!resLower.error && resLower.data && resLower.data.length > 0) return { error: null };
@@ -474,10 +476,13 @@ async function callGASPost(actionName, extraPayload = {}) {
       return { status: 'error', message: 'Data peminjaman tidak ditemukan!' };
     }
     if (actionName === 'updateDataDiSheet') {
-      if (!(await isVerifiedRT())) {
-        return { status: 'error', message: 'Akses ditolak! Sesi Anda bukan RT terverifikasi di database.' };
-      }
       const sheetName = extraPayload.sheetName;
+      let lowerSheet = (sheetName || '').toLowerCase();
+      if (['warga', 'users', 'pengaturan', 'keuangan'].includes(lowerSheet)) {
+        if (!(await isVerifiedRT())) {
+          return { status: 'error', message: 'Akses ditolak! Sesi Anda bukan RT terverifikasi di database.' };
+        }
+      }
       const id = extraPayload.id;
       let formData = sanitizeFormData(sheetName, extraPayload.formData);
       let resUpdate = await safeSupabaseUpdate(sheetName, formData, 'id', id);
