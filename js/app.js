@@ -788,7 +788,7 @@ const FALLBACK_HEADERS = {
   'Sumbangan': ['id', 'nama', 'tanggal', 'jenis_sumbangan', 'keterangan', 'nominal', 'bukti_transfer', 'status', 'nik'],
   'Aset': ['id', 'nama_barang', 'kondisi', 'jumlah', 'status_barang'],
   'Peminjaman': ['id', 'nama_peminjam', 'id_barang', 'nama_barang', 'jumlah_minta', 'acc', 'keterangan', 'catatan_rt', 'status', 'tanggal', 'nik', 'jumlah'],
-  'Aspirasi': ['id', 'tanggal', 'isi_aspirasi', 'status', 'nik'],
+  'Aspirasi': ['id', 'tanggal', 'isi_aspirasi', 'status', 'nik', 'nama'],
   'Kelahiran': ['id', 'nama_bayi', 'tanggal_lahir', 'nama_ayah', 'nama_ibu', 'alamat', 'rt'],
   'Kematian': ['id', 'nama', 'nik', 'no_kk', 'tanggal_meninggal', 'rt', 'alamat', 'keterangan'],
   'PindahMasuk': ['id', 'nama', 'nik', 'no_kk', 'asal', 'alamat_baru', 'rt', 'tanggal_pindah', 'status_pindah'],
@@ -972,34 +972,55 @@ const FALLBACK_HEADERS = {
         });
 
       } else {
+        let userNama = (session.nama || '').toString().toLowerCase().trim();
+
         (aRes.data || []).forEach(item => {
-          if (cariNilaiKolom(item, ['nik','ktp']).trim() === userNik) {
-            let st    = cariNilaiKolom(item, ['status']) || 'Diproses';
+          let itemNik = cariNilaiKolom(item, ['nik','ktp']).trim();
+          let itemNama = cariNilaiKolom(item, ['nama','nama_lengkap','pelapor']).toLowerCase().trim();
+          let matchUser = (userNik && itemNik && itemNik === userNik) || (userNama && itemNama && (itemNama === userNama || itemNama.includes(userNama) || userNama.includes(itemNama)));
+
+          if (matchUser) {
+            let st    = cariNilaiKolom(item, ['status']) || 'Belum di verifikasi';
             let jenis = cariNilaiKolom(item, ['jenis_aduan', 'jenis']) || 'Aduan';
             let id    = item.id || cariNilaiKolom(item, ['id']);
             let rawDate = extractDate(item);
             notifs.push({ id, menu: 'Pengaduan', pesan: `Status Aduan ${jenis}: ${st}`, rawDate });
           }
         });
+
         (sRes.data || []).forEach(item => {
-          if (cariNilaiKolom(item, ['nik','ktp']).trim() === userNik) {
-            let st = cariNilaiKolom(item, ['status']) || 'Diproses';
+          let itemNik = cariNilaiKolom(item, ['nik','ktp']).trim();
+          let itemNama = cariNilaiKolom(item, ['nama','nama_lengkap','pemohon']).toLowerCase().trim();
+          let matchUser = (userNik && itemNik && itemNik === userNik) || (userNama && itemNama && (itemNama === userNama || itemNama.includes(userNama) || userNama.includes(itemNama)));
+
+          if (matchUser) {
+            let st = cariNilaiKolom(item, ['status']) || 'Belum di verifikasi';
             let id = item.id || cariNilaiKolom(item, ['id']);
             let rawDate = extractDate(item);
             notifs.push({ id, menu: 'SuratPengantar', pesan: `Surat Pengantar Anda: Status kini "${st}"`, rawDate });
           }
         });
+
         (pRes.data || []).forEach(item => {
-          if (cariNilaiKolom(item, ['nik','ktp']).trim() === userNik) {
-            let st     = cariNilaiKolom(item, ['status']) || 'Di-update';
+          let itemNik = cariNilaiKolom(item, ['nik','ktp']).trim();
+          let itemNama = cariNilaiKolom(item, ['nama_peminjam','nama','peminjam']).toLowerCase().trim();
+          let matchUser = (userNik && itemNik && itemNik === userNik) || (userNama && itemNama && (itemNama === userNama || itemNama.includes(userNama) || userNama.includes(itemNama)));
+
+          if (matchUser) {
+            let st     = cariNilaiKolom(item, ['status']) || 'Belum di verifikasi';
             let barang = cariNilaiKolom(item, ['nama_barang','nama_aset','barang']) || 'Barang';
             let id     = item.id || cariNilaiKolom(item, ['id']);
             let rawDate = extractDate(item);
             notifs.push({ id, menu: 'Aset', pesan: `Peminjaman ${barang}: ${st}`, rawDate });
           }
         });
+
         (iRes.data || []).forEach(item => {
-          if (cariNilaiKolom(item, ['nik','ktp']).trim() === userNik) {
+          let itemNik = cariNilaiKolom(item, ['nik','ktp']).trim();
+          let itemNama = cariNilaiKolom(item, ['nama','nama_lengkap']).toLowerCase().trim();
+          let matchUser = (userNik && itemNik && itemNik === userNik) || (userNama && itemNama && (itemNama === userNama || itemNama.includes(userNama) || userNama.includes(itemNama)));
+
+          if (matchUser) {
             let st    = cariNilaiKolom(item, ['status']) || '';
             let bulan = cariNilaiKolom(item, ['bulan']) || '';
             let id    = item.id || cariNilaiKolom(item, ['id']);

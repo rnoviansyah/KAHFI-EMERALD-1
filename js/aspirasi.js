@@ -17,7 +17,7 @@ function renderAspirasiView(data) {
 
       <div class="bg-white rounded-2xl shadow-sm overflow-hidden border border-gray-100 p-4">
         <div class="flex justify-between items-center mb-3">
-          <h3 class="font-bold text-xs text-gray-700 uppercase tracking-wide">💬 Daftar Aspirasi Masuk (100% Rahasia & Anonim)</h3>
+          <h3 class="font-bold text-xs text-gray-700 uppercase tracking-wide">💬 Daftar Aspirasi Masuk ${isRt ? '(Khusus RT: Nama Pengirim Terlihat)' : '(100% Rahasia & Anonim Untuk Warga)'}</h3>
           <button onclick="loadMenu('Aspirasi')" class="text-blue-600 hover:text-blue-800 text-xs font-bold flex items-center gap-1"><i class="bi bi-arrow-clockwise"></i> Refresh</button>
         </div>
 
@@ -27,27 +27,28 @@ function renderAspirasiView(data) {
               <tr>
                 <th class="p-3 text-center">NO</th>
                 <th class="p-3">TANGGAL</th>
+                ${isRt ? '<th class="p-3 text-blue-600 font-bold">PENGIRIM (KHUSUS RT)</th>' : ''}
                 <th class="p-3">ISI ASPIRASI / MASUKAN</th>
                 <th class="p-3 text-center">STATUS</th>
                 ${isRt ? '<th class="p-3 text-center">AKSI</th>' : ''}
               </tr>
             </thead>
             <tbody id="aspirasi-table-body">
-              <tr><td colspan="5" class="text-center p-4 text-gray-400">Memuat aspirasi...</td></tr>
+              <tr><td colspan="${isRt ? '6' : '5'}" class="text-center p-4 text-gray-400">Memuat aspirasi...</td></tr>
             </tbody>
           </table>
         </div>
       </div>
     </div>
 
-    <!-- MODAL TULIS ASPIRASI ANONIM -->
+    <!-- MODAL TULIS ASPIRASI -->
     <div id="modal-aspirasi" class="hidden fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 z-50">
       <div class="bg-white p-5 rounded-2xl w-full max-w-md shadow-2xl relative">
         <button onclick="tutupModalAspirasi()" class="absolute top-4 right-4 text-gray-400 hover:text-gray-600 font-bold text-lg w-8 h-8 flex items-center justify-center rounded-full bg-gray-100">&times;</button>
         
         <div class="mb-4 border-b pb-2">
           <h3 class="font-bold text-gray-800 text-sm">Tulis Aspirasi / Saran</h3>
-          <p class="text-[11px] text-gray-500">Aman dan 100% anonim, identitas lu tidak akan dicatat di sistem.</p>
+          <p class="text-[11px] text-gray-500">Kirim kritik, saran, atau masukan untuk kemajuan RT 008/006.</p>
         </div>
 
         <form id="formAspirasi" onsubmit="submitAspirasi(event)" class="space-y-3">
@@ -58,7 +59,7 @@ function renderAspirasiView(data) {
 
           <div class="flex justify-end gap-2 pt-2">
             <button type="button" onclick="tutupModalAspirasi()" class="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-600 rounded-xl text-xs font-bold transition">Batal</button>
-            <button type="submit" id="btnSubmitAspirasi" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold shadow transition">Kirim Secara Anonim</button>
+            <button type="submit" id="btnSubmitAspirasi" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold shadow transition">Kirim Aspirasi</button>
           </div>
         </form>
       </div>
@@ -66,24 +67,39 @@ function renderAspirasiView(data) {
   `;
 
   document.getElementById('main-content').innerHTML = html;
-  renderTabelAspirasiRows(rows, isRt);
+  renderTabelAspirasiRows(rows, isRt, data.headers || []);
 }
 
-function renderTabelAspirasiRows(rows, isRt) {
+function renderTabelAspirasiRows(rows, isRt, headers = []) {
   let tbody = document.getElementById('aspirasi-table-body');
   if (!tbody) return;
   tbody.innerHTML = '';
 
+  let colCount = isRt ? 6 : 5;
+
   if (!rows || rows.length === 0) {
-    tbody.innerHTML = `<tr><td colspan="5" class="text-center p-4 text-gray-400">Belum ada aspirasi yang masuk.</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="${colCount}" class="text-center p-4 text-gray-400">Belum ada aspirasi yang masuk.</td></tr>`;
     return;
   }
 
+  let idIdx = headers.indexOf('id');
+  let tglIdx = headers.indexOf('tanggal');
+  let isiIdx = headers.indexOf('isi_aspirasi');
+  let statusIdx = headers.indexOf('status');
+  let nikIdx = headers.indexOf('nik');
+  let namaIdx = headers.indexOf('nama');
+
   rows.forEach((r, i) => {
-    let idVal = r[0] || '';
-    let tglVal = r[1] || '-';
-    let isiVal = r[2] || '-';
-    let statusVal = r[3] || 'Baru';
+    let idVal = (idIdx > -1 && r[idIdx]) ? r[idIdx] : (r[0] || '');
+    let tglVal = (tglIdx > -1 && r[tglIdx]) ? r[tglIdx] : (r[1] || '-');
+    let isiVal = (isiIdx > -1 && r[isiIdx]) ? r[isiIdx] : (r[2] || '-');
+    let statusVal = (statusIdx > -1 && r[statusIdx]) ? r[statusIdx] : (r[3] || 'Baru');
+    let nikVal = (nikIdx > -1 && r[nikIdx]) ? r[nikIdx] : (r[4] || '-');
+    let namaVal = (namaIdx > -1 && r[namaIdx]) ? r[namaIdx] : (r[5] || '-');
+
+    let pengirimHtml = (namaVal && namaVal !== '-') 
+      ? `${namaVal} <small class="text-gray-400 font-normal block">NIK: ${nikVal}</small>`
+      : `NIK: ${nikVal}`;
 
     let aksiHtml = isRt ? `
       <button onclick="hapusAspirasi('${idVal}')" class="bg-red-50 text-red-600 hover:bg-red-100 border border-red-200 px-2 py-1 rounded-lg text-[10px] font-bold transition">
@@ -95,6 +111,7 @@ function renderTabelAspirasiRows(rows, isRt) {
       <tr class="border-b hover:bg-gray-50/50 transition">
         <td class="p-3 text-center text-gray-400">${i + 1}</td>
         <td class="p-3 text-gray-600 font-mono text-[10px]">${tglVal}</td>
+        ${isRt ? `<td class="p-3 font-semibold text-blue-700 text-xs">${pengirimHtml}</td>` : ''}
         <td class="p-3 font-medium text-gray-800" style="white-space: pre-wrap;">${isiVal}</td>
         <td class="p-3 text-center"><span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-blue-100 text-blue-700">${statusVal}</span></td>
         ${isRt ? `<td class="p-3 text-center">${aksiHtml}</td>` : ''}
@@ -119,9 +136,11 @@ async function submitAspirasi(e) {
   btn.innerText = 'Mengirim...';
 
   let payload = {
-    tanggal: new Date().toLocaleDateString('id-ID'),
+    tanggal: new Date().toLocaleDateString('id-ID') + ' ' + new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }).replace('.', ':') + ' WIB',
     isi_aspirasi: isi,
-    status: 'Baru'
+    status: 'Baru',
+    nik: session.nik || '0',
+    nama: session.nama || session.nik || 'Warga'
   };
 
   const res = await callGASPost('simpanDataKeSheet', {
@@ -130,8 +149,8 @@ async function submitAspirasi(e) {
   });
 
   btn.disabled = false;
-  btn.innerText = 'Kirim Secara Anonim';
-  alert(res ? res.message : 'Aspirasi berhasil dikirim secara anonim!');
+  btn.innerText = 'Kirim Aspirasi';
+  alert(res ? res.message : 'Aspirasi berhasil dikirim!');
   tutupModalAspirasi();
   loadMenu('Aspirasi');
 }
