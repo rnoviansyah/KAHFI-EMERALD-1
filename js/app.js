@@ -75,6 +75,34 @@ function showUIConfirm(text, onConfirm, title = "Konfirmasi Tindakan") {
   });
   bsModal.show();
 }
+
+const viewTemplateCache = {};
+async function loadViewTemplate(viewName, fallbackHtml = '') {
+  const container = document.getElementById('main-content');
+  if (!container) return false;
+  if (viewTemplateCache[viewName]) {
+    container.innerHTML = viewTemplateCache[viewName];
+    return true;
+  }
+  try {
+    const res = await fetch(`./views/${viewName}.html?v=` + Date.now());
+    if (res.ok) {
+      const html = await res.text();
+      viewTemplateCache[viewName] = html;
+      container.innerHTML = html;
+      return true;
+    }
+  } catch (err) {
+    console.warn(`[ViewLoader] views/${viewName}.html fetch skipped:`, err);
+  }
+  if (fallbackHtml) {
+    viewTemplateCache[viewName] = fallbackHtml;
+    container.innerHTML = fallbackHtml;
+    return true;
+  }
+  return false;
+}
+window.loadViewTemplate = loadViewTemplate;
 window.showUIConfirm = showUIConfirm;
 window.showUIToast = showUIToast;
 let _rawSession = { token: '', role: '', nik: '', nama: '', alamat: '', noHp: '' };
@@ -125,9 +153,9 @@ let menuDataCache = {};
 const MENU_CACHE_TTL = 30000;
 const DEFAULT_LOGO_BASE64 = "data:image/jpeg;base64,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";
 const _k1 = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9';
-const _k2 = '.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inp5dGZnbXV1cHVqZ2x1dnZqcWxxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODU3NTk4ODQsImV4cCI6MjEwMTMzNTg4NH0';
-const _k3 = '.oncnLpn4S51uz72E6zZnfrOyk3fvO57MMQa4k0HFh5g';
-const SUPABASE_URL = 'https://zytfgmuupujgluvvjqlq.supabase.co';
+const _k2 = '.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBlbXhzZ2lpc3FnbXZ0dW9ta2pxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODU4MTY3NjMsImV4cCI6MjEwMTM5Mjc2M30';
+const _k3 = '.5oTxN3qZNdpks__10qIa7oWx2LsV7Vqr_E40V8OTqb8';
+const SUPABASE_URL = 'https://pemxsgiisqgmvtuomkjq.supabase.co';
 const SUPABASE_KEY = _k1 + _k2 + _k3;
 const db = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 async function safeSupabaseSelect(tableName) {
@@ -218,8 +246,8 @@ async function isVerifiedRT() {
   }
 }
 async function safeSupabaseUpdate(tableName, payload, eqColumn, eqValue) {
-  let lowerName = (tableName || '').toLowerCase();
-  if (['warga', 'users', 'pengaturan', 'keuangan'].includes(lowerName)) {
+  let lowerName = tableName.toLowerCase();
+  if (['users', 'pengaturan', 'keuangan'].includes(lowerName)) {
     if (!(await isVerifiedRT())) {
       return { error: { message: 'Akses ditolak! Sesi Anda bukan RT terverifikasi di database.' } };
     }
@@ -379,12 +407,36 @@ async function callGASPost(actionName, extraPayload = {}) {
           if (matched) {
             let roleVal = cariNilaiKolom(matched, ['role']) || 'RT';
             let nikVal  = cariNilaiKolom(matched, ['nik']) || uClean;
-            let namaVal = cariNilaiKolom(matched, ['nama', 'nama_lengkap', 'name']) || uClean;
+            let namaVal = cariNilaiKolom(matched, ['nama', 'nama_lengkap', 'name']);
+            let alamatVal = cariNilaiKolom(matched, ['alamat']);
+            let hpVal = cariNilaiKolom(matched, ['no_hp', 'hp', 'wa']);
+
+            try {
+              const { data: safeWarga } = await safeSupabaseSelect('Warga');
+              if (safeWarga && safeWarga.length > 0) {
+                let myW = safeWarga.find(w => {
+                  let wNik = String(cariNilaiKolom(w, ['nik', 'ktp'])).trim();
+                  let wUser = String(cariNilaiKolom(w, ['username', 'user'])).trim().toLowerCase();
+                  return (wNik && wNik === String(nikVal).trim()) || (wUser && wUser === uClean);
+                });
+                if (myW) {
+                  let wFullName = cariNilaiKolom(myW, ['nama_lengkap', 'nama']);
+                  let wAlamat = cariNilaiKolom(myW, ['alamat', 'alamat_rumah']);
+                  let wHp = cariNilaiKolom(myW, ['no_hp', 'hp', 'wa', 'telp']);
+                  if (wFullName) namaVal = wFullName;
+                  if (wAlamat) alamatVal = wAlamat;
+                  if (wHp) hpVal = wHp;
+                }
+              }
+            } catch(e) {}
+
             return {
               status: 'success',
               role: roleVal,
               nik: nikVal,
-              nama: namaVal,
+              nama: namaVal || uClean,
+              alamat: alamatVal || '',
+              noHp: hpVal || '',
               username: uClean,
               message: 'Login Berhasil!'
             };
@@ -477,8 +529,8 @@ async function callGASPost(actionName, extraPayload = {}) {
     }
     if (actionName === 'updateDataDiSheet') {
       const sheetName = extraPayload.sheetName;
-      let lowerSheet = (sheetName || '').toLowerCase();
-      if (['warga', 'users', 'pengaturan', 'keuangan'].includes(lowerSheet)) {
+      let lowerSheet = sheetName ? sheetName.toLowerCase() : '';
+      if (['users', 'pengaturan', 'keuangan'].includes(lowerSheet)) {
         if (!(await isVerifiedRT())) {
           return { status: 'error', message: 'Akses ditolak! Sesi Anda bukan RT terverifikasi di database.' };
         }
@@ -538,8 +590,15 @@ async function callGASPost(actionName, extraPayload = {}) {
     }
     if (actionName === 'tambahUserWarga') {
       if (session.role !== 'RT') return { status: 'error', message: 'Hanya RT yang diizinkan mengelola user!' };
-      const { error } = await safeSupabaseInsert('Users', [extraPayload.userObj]);
-      if (error) return { status: 'error', message: error.message };
+      let uObj = { ...extraPayload.userObj };
+      if (!uObj.id) uObj.id = Date.now();
+      let { error } = await safeSupabaseInsert('Users', [uObj]);
+      if (error) {
+        delete uObj.id;
+        let resFallback = await safeSupabaseInsert('Users', [uObj]);
+        if (!resFallback.error) return { status: 'success', message: 'Akun user berhasil didaftarkan!' };
+        return { status: 'error', message: error.message };
+      }
       return { status: 'success', message: 'Akun user berhasil didaftarkan!' };
     }
     if (actionName === 'hapusUserAkun') {
@@ -645,7 +704,7 @@ const FALLBACK_HEADERS = {
   'Warga': ['id', 'nama_lengkap', 'nama_panggilan', 'nik', 'no_kk', 'tempat_lahir', 'tanggal_lahir', 'jenis_kelamin', 'alamat', 'status_nikah', 'status_tinggal', 'pekerjaan', 'no_hp', 'foto_url'],
   'Iuran': ['id', 'nik', 'nama', 'no_kk', 'bulan', 'tahun', 'nominal', 'status', 'tanggal_bayar', 'diterima_oleh', 'bukti_transfer'],
   'Pengaduan': ['id', 'nama', 'nik', 'no_hp', 'jenis_aduan', 'keterangan', 'tanggal', 'foto_url', 'status', 'foto_penyelesaian'],
-  'SuratPengantar': ['id', 'nama', 'nik', 'alamat', 'rt', 'jenis_surat', 'status', 'keterangan_admin'],
+  'SuratPengantar': ['id', 'nama', 'nik', 'alamat', 'rt', 'jenis_surat', 'keterangan', 'status', 'keterangan_admin'],
   'Keuangan': ['id', 'tanggal', 'pemasukan', 'pengeluaran', 'keterangan', 'saldo', 'foto_url'],
   'Sumbangan': ['id', 'nama', 'tanggal', 'jenis_sumbangan', 'keterangan', 'nominal', 'bukti_transfer', 'status', 'nik'],
   'Aset': ['id', 'nama_barang', 'kondisi', 'jumlah', 'status_barang'],
@@ -1059,7 +1118,7 @@ async function fetchNotifikasi(isRealtimeTrigger = false) {
     if (isRealtimeTrigger && unreadCount > lastNotifCount && lastNotifCount !== 0) {
       playNotifSound();
       let notifTerbaru = rawNotifData[0];
-      if (notifTerbaru) triggerNativeBrowserNotif(`KAHFI EMERALD 1 - ${notifTerbaru.menu}`, notifTerbaru.pesan);
+      if (notifTerbaru) triggerNativeBrowserNotif(`RT 5 - ${notifTerbaru.menu}`, notifTerbaru.pesan);
     }
     lastNotifCount = unreadCount;
     let readCount = parseInt(localStorage.getItem('rt_notif_read_count_' + session.nik) || '0');
@@ -1224,7 +1283,7 @@ function applySessionUI() {
   }, 60000);
 }
 async function doLogout() {
-  showUIConfirm('Apakah Anda yakin ingin keluar dari sistem aplikasi KAHFI EMERALD 1 RT 008/006?', async function() {
+  showUIConfirm('Apakah Anda yakin ingin keluar dari sistem aplikasi SISTEM INFORMASI RT 5?', async function() {
     if (session.token) {
       try { await safeSupabaseDelete('Sessions', 'token', session.token); } catch(e) {}
     }
@@ -1276,13 +1335,22 @@ async function loadMenu(menu) {
   document.getElementById('rek-info').style.display = (menu === 'Sumbangan') ? 'block' : 'none';
   if (document.getElementById('searchInput')) document.getElementById('searchInput').value = "";
   switch(menu) {
-    case 'Dashboard':    if (typeof loadDashboardView   === 'function') { loadDashboardView();   return; } break;
-    case 'Profil':       if (typeof loadProfilView       === 'function') { loadProfilView();       return; } break;
-    case 'Warga':        if (typeof loadWargaView        === 'function') { loadWargaView();        return; } break;
-    case 'Kelahiran':    if (typeof loadKelahiranView    === 'function') { loadKelahiranView();    return; } break;
-    case 'Kematian':     if (typeof loadKematianView     === 'function') { loadKematianView();     return; } break;
-    case 'PindahMasuk':  if (typeof loadPindahMasukView  === 'function') { loadPindahMasukView();  return; } break;
-    case 'PindahKeluar': if (typeof loadPindahKeluarView === 'function') { loadPindahKeluarView(); return; } break;
+    case 'Dashboard':      if (typeof loadDashboardView   === 'function') { loadDashboardView();   return; } break;
+    case 'Profil':         if (typeof loadProfilView       === 'function') { loadProfilView();       return; } break;
+    case 'Warga':          if (typeof loadWargaView        === 'function') { loadWargaView();        return; } break;
+    case 'Keuangan':       if (typeof loadKeuanganView     === 'function') { loadKeuanganView();     return; } break;
+    case 'Iuran':          if (typeof loadIuranView        === 'function') { loadIuranView();        return; } break;
+    case 'Pengaduan':      if (typeof loadPengaduanView    === 'function') { loadPengaduanView();    return; } break;
+    case 'Surat':
+    case 'SuratPengantar': if (typeof loadSuratView        === 'function') { loadSuratView();        return; } break;
+    case 'Sumbangan':      if (typeof loadSumbanganView    === 'function') { loadSumbanganView();    return; } break;
+    case 'Aset':
+    case 'Inventaris':     if (typeof loadAsetView         === 'function') { loadAsetView();         return; } break;
+    case 'Aspirasi':       if (typeof loadAspirasiView     === 'function') { loadAspirasiView();     return; } break;
+    case 'Kelahiran':      if (typeof loadKelahiranView    === 'function') { loadKelahiranView();    return; } break;
+    case 'Kematian':       if (typeof loadKematianView     === 'function') { loadKematianView();     return; } break;
+    case 'PindahMasuk':    if (typeof loadPindahMasukView  === 'function') { loadPindahMasukView();  return; } break;
+    case 'PindahKeluar':   if (typeof loadPindahKeluarView === 'function') { loadPindahKeluarView(); return; } break;
     case 'Pengaturan':
     case 'PengaturanRT':
       if (String(session.role || '').toUpperCase() === 'RT') {
@@ -1321,6 +1389,16 @@ async function loadMenu(menu) {
   }
 }
 function renderTable(data, menu) {
+  if (menu === 'Keuangan' && typeof renderKeuanganCustom === 'function') return renderKeuanganCustom(data);
+  if (menu === 'Iuran' && typeof renderIuranCustom === 'function') return renderIuranCustom(data);
+  if ((menu === 'Aset' || menu === 'Inventaris') && typeof renderAsetCustom === 'function') return renderAsetCustom(data);
+  if (menu === 'Aspirasi' && typeof renderAspirasiView === 'function') return renderAspirasiView(data);
+  if (menu === 'Pengaduan' && typeof renderPengaduanCustom === 'function') return renderPengaduanCustom(data);
+  if ((menu === 'Surat' || menu === 'SuratPengantar') && typeof renderSuratPengantarCustom === 'function') return renderSuratPengantarCustom(data);
+  if (menu === 'Sumbangan' && typeof renderSumbanganCustom === 'function') return renderSumbanganCustom(data);
+  if (menu === 'Warga' && typeof renderWargaCustom === 'function') return renderWargaCustom(data);
+  if (menu === 'Kelahiran' && typeof renderKelahiranCustom === 'function') return renderKelahiranCustom(data);
+
   let html = '';
   let bolehTambah = session.role === 'RT' || (session.role === 'Warga' && ['Pengaduan','SuratPengantar','Sumbangan','Aset','Peminjaman','Aspirasi'].includes(menu));
   if (bolehTambah) {
@@ -1397,14 +1475,24 @@ async function bukaModalEdit(id) {
 async function generateFormInputs(rowData) {
   let formBody = document.getElementById('dynamicForm');
   formBody.innerHTML = '';
-  if (session.role === 'Warga' && !rowData && (!session.alamat || !session.nama) && session.nik) {
+  if (session.role === 'Warga' && !rowData && session.nik) {
     try {
       const { data: safeWarga } = await safeSupabaseSelect('Warga');
-      if (safeWarga) {
-        let myW = safeWarga.find(w => String(cariNilaiKolom(w, ['nik', 'ktp'])).trim() === String(session.nik).trim());
+      if (safeWarga && safeWarga.length > 0) {
+        let myW = safeWarga.find(w => {
+          let wNik = String(cariNilaiKolom(w, ['nik', 'ktp'])).trim();
+          let wUser = String(cariNilaiKolom(w, ['username', 'user'])).trim().toLowerCase();
+          let sNik = String(session.nik || '').trim();
+          let sUser = String(session.username || session.nik || '').trim().toLowerCase();
+          return (wNik && wNik === sNik) || (wUser && (wUser === sUser || wUser === sNik));
+        });
         if (myW) {
-          session.alamat = session.alamat || cariNilaiKolom(myW, ['alamat', 'alamat_rumah']) || '';
-          session.nama   = session.nama   || cariNilaiKolom(myW, ['nama_lengkap', 'nama']) || '';
+          let realNama = cariNilaiKolom(myW, ['nama_lengkap', 'nama', 'nama_warga']);
+          let realAlamat = cariNilaiKolom(myW, ['alamat', 'alamat_rumah', 'no_rumah']);
+          let realHp = cariNilaiKolom(myW, ['no_hp', 'hp', 'wa', 'telp']);
+          if (realNama) session.nama = realNama;
+          if (realAlamat) session.alamat = realAlamat;
+          if (realHp) session.noHp = realHp;
           localStorage.setItem('rt_user_session', JSON.stringify(session));
         }
       }
@@ -1437,6 +1525,7 @@ async function generateFormInputs(rowData) {
       let parts = val.split('/');
       if (parts.length === 3) val = parts[2] + '-' + parts[1] + '-' + parts[0];
     }
+    let safeVal = String(val || '').replace(/"/g, '&quot;');
     let inputHtml = '';
     if (nameLower === 'status' && ['Pengaduan','SuratPengantar','Sumbangan'].includes(currentActiveMenu)) {
       inputHtml = `<select class="form-select dynamic-input" data-key="${h}">
@@ -1455,8 +1544,28 @@ async function generateFormInputs(rowData) {
         <option value="JALANAN" ${val.toUpperCase()==='JALANAN'?'selected':''}>JALANAN</option>
         <option value="LAINNYA" ${val.toUpperCase()==='LAINNYA'?'selected':''}>LAINNYA</option>
       </select>`;
+    } else if (currentActiveMenu === 'SuratPengantar' && (nameLower.includes('jenis') || nameLower.includes('perihal') || nameLower.includes('keperluan'))) {
+      let rawJenisVal = String(val || '').split('|')[0].trim();
+      let optList = (typeof JENIS_SURAT_LIST !== 'undefined') ? JENIS_SURAT_LIST : [
+        { value: 'Surat Pengantar Umum', label: 'Surat Pengantar Umum' },
+        { value: 'Pengantar SKCK', label: 'Pengantar SKCK' },
+        { value: 'Surat Keterangan Tidak Mampu', label: 'Surat Keterangan Tidak Mampu (SKTM)' },
+        { value: 'Surat Keterangan Domisili Usaha', label: 'Surat Keterangan Domisili Usaha (SKDU)' },
+        { value: 'Surat Keterangan Pindah', label: 'Surat Keterangan Pindah Domisili' },
+        { value: 'Pengantar Nikah', label: 'Surat Pengantar Nikah' },
+        { value: 'Surat Keterangan Ahli Waris', label: 'Surat Keterangan Ahli Waris' },
+        { value: 'Surat Izin Keramaian', label: 'Surat Izin Keramaian/Acara' }
+      ];
+      let opts = optList.map(o => `<option value="${o.value}" ${rawJenisVal.toLowerCase()===o.value.toLowerCase().trim()?'selected':''}>${o.label}</option>`).join('');
+      inputHtml = `<select class="form-select dynamic-input" data-key="${h}" onchange="if(typeof renderExtraSuratFields==='function') renderExtraSuratFields(this.value);">
+        <option value="">-- Pilih Jenis Surat Pengantar --</option>
+        ${opts}
+      </select>
+      <div id="extra-surat-fields-container" class="p-3 border rounded-3 bg-light mt-2 mb-2" style="display:none;"></div>`;
+    } else if (currentActiveMenu === 'SuratPengantar' && nameLower === 'keterangan') {
+      inputHtml = `<input type="hidden" class="dynamic-input" data-key="${h}" value="${safeVal}">`;
     } else if (nameLower.includes('tanggal')) {
-      inputHtml = `<input type="date" class="form-control dynamic-input" data-key="${h}" value="${val}">`;
+      inputHtml = `<input type="date" class="form-control dynamic-input" data-key="${h}" value="${safeVal}">`;
     } else if (nameLower === 'jenis_kelamin') {
       inputHtml = `<select class="form-select dynamic-input" data-key="${h}">
         <option value="">-- Pilih Jenis Kelamin --</option>
@@ -1486,10 +1595,56 @@ async function generateFormInputs(rowData) {
           <small class="text-muted text-[10px] d-block mt-1">*Pilih file foto dari HP/Kamera Anda.</small>
         </div>`;
     } else {
-      let isReadonly = (session.role === 'Warga' && !rowData && (nameLower === 'nik' || nameLower === 'nama' || nameLower === 'nama_lengkap' || nameLower.includes('nama') || nameLower.includes('alamat'))) ? 'readonly style="background-color:#f1f5f9;cursor:not-allowed;"' : '';
-      inputHtml = `<input type="text" class="form-control dynamic-input" data-key="${h}" value="${val}" placeholder="Masukkan ${labelText.toLowerCase()}..." ${isReadonly}>`;
+      let isNameField = (nameLower === 'nama' || nameLower === 'nama_lengkap' || nameLower.includes('nama'));
+      let isReadonly = (session.role === 'Warga' && !rowData && (nameLower === 'nik' || nameLower.includes('alamat') || (isNameField && currentActiveMenu !== 'Sumbangan'))) ? 'readonly style="background-color:#f1f5f9;cursor:not-allowed;"' : '';
+      let helpText = (currentActiveMenu === 'Sumbangan' && isNameField) ? `<small class="text-muted text-[10px] d-block mt-1 font-medium">*Bisa diubah jika ingin menggunakan nama <b>"Hamba Allah"</b>.</small>` : '';
+      inputHtml = `<input type="text" class="form-control dynamic-input" data-key="${h}" value="${safeVal}" placeholder="Masukkan ${labelText.toLowerCase()}..." ${isReadonly}>${helpText}`;
     }
-    formBody.innerHTML += `<div class="mb-3"><label class="form-label small text-secondary fw-bold">${labelText}</label>${inputHtml}</div>`;
+    if (currentActiveMenu === 'SuratPengantar' && nameLower === 'keterangan') {
+      formBody.innerHTML += inputHtml;
+    } else {
+      formBody.innerHTML += `<div class="mb-3"><label class="form-label small text-secondary fw-bold">${labelText}</label>${inputHtml}</div>`;
+    }
+  }
+  if (currentActiveMenu === 'SuratPengantar' && typeof renderExtraSuratFields === 'function') {
+    let jenisSelect = document.querySelector('.dynamic-input[data-key*="jenis"], .dynamic-input[data-key*="perihal"], .dynamic-input[data-key*="keperluan"], .dynamic-input[data-key*="JENIS"]');
+    let selVal = jenisSelect ? jenisSelect.value : '';
+    let existingObj = {};
+    if (rowData) {
+      let rawJenisStr = '';
+      if (Array.isArray(rowData)) {
+        let headers = (currentHeaders || []).map(h => (h || '').toLowerCase().trim());
+        let jIdx = headers.findIndex(h => h.includes('jenis') || h.includes('perihal') || h.includes('keperluan'));
+        if (jIdx > -1) rawJenisStr = rowData[jIdx];
+      } else if (typeof rowData === 'object') {
+        rawJenisStr = rowData.jenis_surat || rowData.jenis || rowData.JENIS_SURAT || '';
+      }
+      if (rawJenisStr && rawJenisStr.includes('|')) {
+        try { existingObj = JSON.parse(rawJenisStr.split('|').slice(1).join('|')); } catch(e) {}
+      }
+      if (Object.keys(existingObj).length === 0) {
+        let ketVal = '';
+        if (Array.isArray(rowData)) {
+          let headers = (currentHeaders || []).map(h => (h || '').toLowerCase().trim());
+          let kIdx = headers.indexOf('keterangan');
+          if (kIdx === -1) kIdx = headers.findIndex(h => h.includes('keterangan') && !h.includes('admin'));
+          if (kIdx > -1) ketVal = rowData[kIdx];
+        } else if (typeof rowData === 'object') {
+          ketVal = rowData.keterangan || rowData.Keterangan || rowData.KETERANGAN || '';
+        }
+        if (ketVal && ketVal !== '{' && ketVal !== 'null') {
+          let trimmed = String(ketVal).trim();
+          if (trimmed.startsWith('{') && trimmed.endsWith('}')) {
+            try { existingObj = JSON.parse(trimmed); } catch(e) {}
+          } else if (trimmed && trimmed !== '-') {
+            existingObj = { catatan: trimmed, nama_acara: trimmed, nama_usaha: trimmed, keperluan: trimmed, alamat_baru: trimmed };
+          }
+        }
+      }
+    }
+    if (selVal) {
+      renderExtraSuratFields(selVal, existingObj);
+    }
   }
 }
 function compressImageFile(file, maxWidth = 800, maxHeight = 800, quality = 0.75) {
@@ -1529,6 +1684,22 @@ function submitFormBaru(e) {
   if (e) e.preventDefault();
   let payload = {};
   document.querySelectorAll('.dynamic-input').forEach(inp => { payload[inp.getAttribute('data-key')] = inp.value; });
+  if (currentActiveMenu === 'SuratPengantar') {
+    let extraObj = {};
+    document.querySelectorAll('.extra-surat-input').forEach(inp => {
+      let k = inp.getAttribute('data-extra-key');
+      if (k && inp.value) extraObj[k] = inp.value;
+    });
+    let jenisKey = Object.keys(payload).find(k => k.toLowerCase().includes('jenis') || k.toLowerCase().includes('perihal') || k.toLowerCase().includes('keperluan'));
+    if (jenisKey && payload[jenisKey]) {
+      payload[jenisKey] = payload[jenisKey].split('|')[0].trim();
+    }
+    if (Object.keys(extraObj).length > 0) {
+      let ketKey = Object.keys(payload).find(k => k.toLowerCase() === 'keterangan' || (k.toLowerCase().includes('keterangan') && !k.toLowerCase().includes('admin')));
+      if (!ketKey) ketKey = 'keterangan';
+      payload[ketKey] = JSON.stringify(extraObj);
+    }
+  }
   let filePromises = [];
   document.querySelectorAll('.dynamic-file-input').forEach(fileInp => {
     let key = fileInp.getAttribute('data-key');
@@ -1636,18 +1807,22 @@ function filterTable() {
   });
 }
 let appSettings = {
-  app_title: 'KAHFI EMERALD 1 RT 008/006',
-  app_short_name: 'KAHFI EMERALD 1',
-  app_subtitle: 'HAPPINES STARTS RIGHT HERE',
-  app_logo: './img/logo.jpg',
+  app_title: 'SISTEM INFORMASI RT 5',
+  app_short_name: 'RT 5',
+  app_subtitle: 'AMAN, BERSIH, MODERN, TRANSPARAN DAN EFISIEN',
+  app_logo: './img/logo.webp',
   app_theme: 'blue',
   app_theme_color: '#1e3a8a',
+  nama_sekretaris: 'Sekretaris RT 05',
+  nama_rt_ketua: 'Ketua RT 05',
+  ttd_sekretaris: '',
+  ttd_ketua_rt: '',
   payment_rekening: JSON.stringify([
     { bank: 'DANA', no: '08973366667', an: 'RIZKY NOVIANSYAH' },
     { bank: 'BRI', no: '231313', an: 'RIZKY NOVIANSYAH' }
   ]),
   payment_qris_string: '00020101021126570011ID.DANA.WWW011893600915311093669202091109366920303UKE51440014ID.CO.QRIS.WWW0215ID10210624013640303UKE5204899953033605802ID5909SHN GROUP6010Kab. Bogor6105163206304BAFC',
-  payment_qris_name: 'KAHFI EMERALD 1 / RT 008/006',
+  payment_qris_name: 'RT 5 / RW 01',
   payment_qris: '',
   info_warga: ''
 };
@@ -1665,9 +1840,9 @@ function updateDynamicManifest() {
     else if (logoUrl.endsWith('.jpg') || logoUrl.endsWith('.jpeg')) mimeType = 'image/jpeg';
     else if (logoUrl.endsWith('.webp')) mimeType = 'image/webp';
     let manifestData = {
-      name: appSettings.app_title || 'KAHFI EMERALD 1 RT 008/006',
-      short_name: appSettings.app_short_name || 'KAHFI EMERALD 1',
-      description: (appSettings.app_subtitle || 'HAPPINES STARTS RIGHT HERE'),
+      name: appSettings.app_title || 'SISTEM INFORMASI RT 5',
+      short_name: appSettings.app_short_name || 'RT 5',
+      description: (appSettings.app_subtitle || 'AMAN, BERSIH, MODERN, TRANSPARAN DAN EFISIEN'),
       start_url: absStartUrl,
       scope: absScope,
       display: 'standalone',
@@ -1862,6 +2037,15 @@ async function simpanIdentitasDanTema(e) {
   let theme = document.getElementById('set-app-theme').value;
   let themeColor = document.getElementById('set-app-theme-color') ? document.getElementById('set-app-theme-color').value : '#1e3a8a';
   let waNumber = document.getElementById('set-rt-wa-number') ? document.getElementById('set-rt-wa-number').value.trim() : '';
+  if (waNumber.startsWith('0')) {
+    waNumber = '62' + waNumber.substring(1);
+  } else if (waNumber.startsWith('+62')) {
+    waNumber = waNumber.substring(1);
+  }
+  let namaSekretaris = document.getElementById('set-nama-sekretaris') ? document.getElementById('set-nama-sekretaris').value.trim() : '';
+  let namaRtKetua = document.getElementById('set-nama-rt-ketua') ? document.getElementById('set-nama-rt-ketua').value.trim() : '';
+  let ttdSekretaris = document.getElementById('set-ttd-sekretaris') ? document.getElementById('set-ttd-sekretaris').value.trim() : '';
+  let ttdKetuaRt = document.getElementById('set-ttd-ketua-rt') ? document.getElementById('set-ttd-ketua-rt').value.trim() : '';
   let settingsArray = [
     { kunci: 'app_title', nilai: title },
     { kunci: 'app_short_name', nilai: shortName },
@@ -1869,7 +2053,11 @@ async function simpanIdentitasDanTema(e) {
     { kunci: 'app_logo', nilai: logo },
     { kunci: 'app_theme', nilai: theme },
     { kunci: 'app_theme_color', nilai: themeColor },
-    { kunci: 'rt_wa_number', nilai: waNumber }
+    { kunci: 'rt_wa_number', nilai: waNumber },
+    { kunci: 'nama_sekretaris', nilai: namaSekretaris },
+    { kunci: 'nama_rt_ketua', nilai: namaRtKetua },
+    { kunci: 'ttd_sekretaris', nilai: ttdSekretaris },
+    { kunci: 'ttd_ketua_rt', nilai: ttdKetuaRt }
   ];
   const res = await callGASPost('simpanPengaturanApp', { settingsArray });
   if (res && res.status === 'success') {
@@ -1879,11 +2067,55 @@ async function simpanIdentitasDanTema(e) {
     alert('Gagal menyimpan: ' + (res ? res.message : 'Error'));
   }
 }
+function handleTtdFileUpload(e, targetType) {
+  let file = e.target.files[0];
+  if (!file) return;
+  let reader = new FileReader();
+  reader.onload = function(evt) {
+    let img = new Image();
+    img.onload = function() {
+      let canvas = document.createElement('canvas');
+      let maxDim = 400;
+      let width = img.width;
+      let height = img.height;
+      if (width > height) {
+        if (width > maxDim) {
+          height = Math.round((height * maxDim) / width);
+          width = maxDim;
+        }
+      } else {
+        if (height > maxDim) {
+          width = Math.round((width * maxDim) / height);
+          height = maxDim;
+        }
+      }
+      canvas.width = width;
+      canvas.height = height;
+      let ctx = canvas.getContext('2d');
+      ctx.drawImage(img, 0, 0, width, height);
+      let compressedBase64 = canvas.toDataURL('image/png');
+      if (targetType === 'sekretaris') {
+        let inputUrl = document.getElementById('set-ttd-sekretaris');
+        let previewImg = document.getElementById('preview-ttd-sekretaris');
+        if (inputUrl) inputUrl.value = compressedBase64;
+        if (previewImg) { previewImg.src = compressedBase64; previewImg.style.display = 'block'; }
+      } else if (targetType === 'ketua') {
+        let inputUrl = document.getElementById('set-ttd-ketua-rt');
+        let previewImg = document.getElementById('preview-ttd-ketua-rt');
+        if (inputUrl) inputUrl.value = compressedBase64;
+        if (previewImg) { previewImg.src = compressedBase64; previewImg.style.display = 'block'; }
+      }
+      alert('File tanda tangan berhasil dipilih! Klik "Simpan Identitas & Tema" untuk menyimpan.');
+    };
+    img.src = evt.target.result;
+  };
+  reader.readAsDataURL(file);
+}
 async function simpanRekeningDanQRIS(e) {
   e.preventDefault();
-  let qrisString = document.getElementById('set-payment-qris-string').value;
-  let qrisName   = document.getElementById('set-payment-qris-name').value;
-  let qrisUrl    = document.getElementById('set-payment-qris').value;
+  let qrisString = document.getElementById('set-payment-qris-string').value.trim();
+  let qrisName   = document.getElementById('set-payment-qris-name').value.trim();
+  let qrisUrl    = document.getElementById('set-payment-qris').value.trim();
   let rekList = [];
   document.querySelectorAll('.row-rek-item').forEach(row => {
     let b = row.querySelector('.inp-rek-bank').value.trim();
@@ -1916,6 +2148,7 @@ async function simpanUserBaru(e) {
     return;
   }
   let userObj = {
+    id: Date.now(),
     username: username,
     nik: nik || username,
     password: password,
@@ -2055,6 +2288,60 @@ async function hapusSesiLogin(token) {
     }
   }, 'Putuskan Sesi Login');
 }
+function initTtdSignaturePad(canvasId, type) {
+  let canvas = document.getElementById(canvasId);
+  if (!canvas) return;
+  let ctx = canvas.getContext('2d');
+  let drawing = false;
+  let lastX = 0, lastY = 0;
+  ctx.strokeStyle = '#1a1a2e';
+  ctx.lineWidth = 2.5;
+  ctx.lineCap = 'round';
+  ctx.lineJoin = 'round';
+  function getPos(e) {
+    let rect = canvas.getBoundingClientRect();
+    let scaleX = canvas.width / rect.width;
+    let scaleY = canvas.height / rect.height;
+    if (e.touches) {
+      return { x: (e.touches[0].clientX - rect.left) * scaleX, y: (e.touches[0].clientY - rect.top) * scaleY };
+    }
+    return { x: (e.clientX - rect.left) * scaleX, y: (e.clientY - rect.top) * scaleY };
+  }
+  function startDraw(e) { e.preventDefault(); drawing = true; let p = getPos(e); lastX = p.x; lastY = p.y; ctx.beginPath(); ctx.arc(lastX, lastY, 1, 0, Math.PI * 2); ctx.fillStyle = '#1a1a2e'; ctx.fill(); }
+  function draw(e) { e.preventDefault(); if (!drawing) return; let p = getPos(e); ctx.beginPath(); ctx.moveTo(lastX, lastY); ctx.lineTo(p.x, p.y); ctx.stroke(); lastX = p.x; lastY = p.y; }
+  function endDraw() { drawing = false; }
+  canvas.addEventListener('mousedown', startDraw);
+  canvas.addEventListener('mousemove', draw);
+  canvas.addEventListener('mouseup', endDraw);
+  canvas.addEventListener('mouseleave', endDraw);
+  canvas.addEventListener('touchstart', startDraw, { passive: false });
+  canvas.addEventListener('touchmove', draw, { passive: false });
+  canvas.addEventListener('touchend', endDraw);
+}
+function hapusTtdCanvas(type) {
+  let canvasId = type === 'sekretaris' ? 'canvas-ttd-sekretaris' : 'canvas-ttd-ketua';
+  let canvas = document.getElementById(canvasId);
+  if (canvas) {
+    let ctx = canvas.getContext('2d');
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+  }
+}
+function simpanTtdCanvas(type) {
+  let canvasId = type === 'sekretaris' ? 'canvas-ttd-sekretaris' : 'canvas-ttd-ketua';
+  let inputId = type === 'sekretaris' ? 'set-ttd-sekretaris' : 'set-ttd-ketua-rt';
+  let previewWrpId = type === 'sekretaris' ? 'preview-ttd-sekretaris-wrapper' : 'preview-ttd-ketua-wrapper';
+  let previewImgId = type === 'sekretaris' ? 'preview-ttd-sekretaris' : 'preview-ttd-ketua-rt';
+  let canvas = document.getElementById(canvasId);
+  if (!canvas) return;
+  let imgData = canvas.toDataURL('image/png');
+  let inp = document.getElementById(inputId);
+  if (inp) inp.value = imgData;
+  let previewImg = document.getElementById(previewImgId);
+  if (previewImg) previewImg.src = imgData;
+  let wrapper = document.getElementById(previewWrpId);
+  if (wrapper) wrapper.style.display = 'block';
+  showUIToast('✅ Tanda tangan berhasil! Klik "Simpan Identitas & Tema" untuk menyimpan.', 'success');
+}
 async function renderPengaturanRTView() {
   if (session.role !== 'RT') return;
   document.getElementById('page-title').innerText = 'Pengaturan RT & Sistem';
@@ -2120,11 +2407,11 @@ async function renderPengaturanRTView() {
               <div class="row g-3 mb-3">
                 <div class="col-md-8">
                   <label class="form-label font-semibold text-xs text-gray-700">NAMA / JUDUL APLIKASI</label>
-                  <input type="text" id="set-app-title" class="form-control" value="${appSettings.app_title || ''}" placeholder="Contoh: KAHFI EMERALD 1 RT 008/006" required oninput="document.getElementById('pwa-name-preview').innerText=this.value">
+                  <input type="text" id="set-app-title" class="form-control" value="${appSettings.app_title || ''}" placeholder="Contoh: SISTEM INFORMASI RT 5" required oninput="document.getElementById('pwa-name-preview').innerText=this.value">
                 </div>
                 <div class="col-md-4">
                   <label class="form-label font-semibold text-xs text-gray-700">NAMA SINGKAT PWA <small class="text-danger">(maks 12 karakter)</small></label>
-                  <input type="text" id="set-app-short-name" class="form-control" maxlength="12" value="${appSettings.app_short_name || 'KAHFI EMERALD 1'}" placeholder="Contoh: KAHFI EMERALD 1" oninput="document.getElementById('pwa-shortname-preview').innerText=this.value">
+                  <input type="text" id="set-app-short-name" class="form-control" maxlength="12" value="${appSettings.app_short_name || 'RT 5'}" placeholder="Contoh: RT 5" oninput="document.getElementById('pwa-shortname-preview').innerText=this.value">
                   <small class="text-muted">Nama yang muncul di home screen HP saat install PWA.</small>
                 </div>
               </div>
@@ -2135,17 +2422,65 @@ async function renderPengaturanRTView() {
                     <div class="rounded-2xl bg-blue-600 d-flex align-items-center justify-content-center shadow" style="width:56px;height:56px;">
                       <i class="bi bi-house-fill text-white fs-4"></i>
                     </div>
-                    <small id="pwa-shortname-preview" class="d-block mt-1 fw-bold text-gray-700" style="font-size:10px;max-width:64px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;">${appSettings.app_short_name || 'KAHFI EMERALD 1'}</small>
+                    <small id="pwa-shortname-preview" class="d-block mt-1 fw-bold text-gray-700" style="font-size:10px;max-width:64px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;">${appSettings.app_short_name || 'RT 5'}</small>
                   </div>
                   <div class="text-xs text-gray-500">
-                    <p class="mb-1">📱 Nama di manifest: <b id="pwa-name-preview">${appSettings.app_title || 'KAHFI EMERALD 1 RT 008/006'}</b></p>
-                    <p class="mb-0">🏠 Nama di home screen: <b id="pwa-shortname-preview2">${appSettings.app_short_name || 'KAHFI EMERALD 1'}</b></p>
+                    <p class="mb-1">📱 Nama di manifest: <b id="pwa-name-preview">${appSettings.app_title || 'SISTEM INFORMASI RT 5'}</b></p>
+                    <p class="mb-0">🏠 Nama di home screen: <b id="pwa-shortname-preview2">${appSettings.app_short_name || 'RT 5'}</b></p>
                   </div>
                 </div>
               </div>
               <div class="mb-3">
                 <label class="form-label font-semibold text-xs text-gray-700">SLOGAN / SUBTITLE</label>
-                <input type="text" id="set-app-subtitle" class="form-control" value="${appSettings.app_subtitle || ''}" placeholder="Contoh: HAPPINES STARTS RIGHT HERE">
+                <input type="text" id="set-app-subtitle" class="form-control" value="${appSettings.app_subtitle || ''}" placeholder="Contoh: AMAN, BERSIH, MODERN, TRANSPARAN DAN EFISIEN">
+              </div>
+              <div class="row g-3 mb-3">
+                <div class="col-md-6">
+                  <label class="form-label font-semibold text-xs text-gray-700">NAMA SEKRETARIS RT <small class="text-primary font-bold">(Teks Tanda Tangan Surat PDF)</small></label>
+                  <input type="text" id="set-nama-sekretaris" class="form-control" value="${appSettings.nama_sekretaris || 'Sekretaris RT 05'}" placeholder="Contoh: Nama Sekretaris RT">
+                </div>
+                <div class="col-md-6">
+                  <label class="form-label font-semibold text-xs text-gray-700">NAMA KETUA RT <small class="text-primary font-bold">(Teks Tanda Tangan Surat PDF)</small></label>
+                  <input type="text" id="set-nama-rt-ketua" class="form-control" value="${appSettings.nama_rt_ketua || 'Ketua RT 05'}" placeholder="Contoh: Nama Ketua RT">
+                </div>
+              </div>
+              <div class="row g-3 mb-4 p-3 bg-light border rounded-3">
+                <div class="col-12 mb-1">
+                  <h6 class="fw-bold text-dark text-xs mb-0"><i class="bi bi-pen-fill me-1 text-primary"></i> TANDA TANGAN DIGITAL (CETAK SURAT PDF)</h6>
+                  <small class="text-muted text-[11px]">Tanda tangan langsung di kotak di bawah menggunakan jari/stylus/mouse. Tanda tangan akan otomatis dicetak pada PDF Surat Pengantar.</small>
+                </div>
+                <div class="col-md-6">
+                  <label class="form-label font-semibold text-xs text-gray-700">TANDA TANGAN SEKRETARIS RT</label>
+                  <div class="p-2 border rounded bg-white text-center">
+                    <canvas id="canvas-ttd-sekretaris" width="280" height="110" style="border:2px dashed #6c757d; border-radius:8px; cursor:crosshair; touch-action:none; background:#fff; display:block; margin:0 auto;" title="Tanda tangan di sini"></canvas>
+                    <div class="d-flex gap-2 mt-2 justify-content-center">
+                      <button type="button" class="btn btn-sm btn-outline-danger" onclick="hapusTtdCanvas('sekretaris')"><i class="bi bi-eraser-fill me-1"></i>Hapus</button>
+                      <button type="button" class="btn btn-sm btn-outline-success" onclick="simpanTtdCanvas('sekretaris')"><i class="bi bi-check-circle-fill me-1"></i>Gunakan Tanda Tangan Ini</button>
+                    </div>
+                    <input type="hidden" id="set-ttd-sekretaris" value="${appSettings.ttd_sekretaris || ''}">
+                    <div id="preview-ttd-sekretaris-wrapper" class="mt-2" style="${appSettings.ttd_sekretaris ? '' : 'display:none;'}">
+                      <small class="text-success font-bold text-[10px] d-block mb-1"><i class="bi bi-check-circle me-1"></i>Tanda tangan tersimpan:</small>
+                      <img id="preview-ttd-sekretaris" src="${appSettings.ttd_sekretaris || ''}" class="border rounded" style="max-height:55px;object-fit:contain;">
+                      <button type="button" class="btn btn-xs btn-link text-danger text-[10px] d-block mx-auto mt-1" onclick="document.getElementById('set-ttd-sekretaris').value=''; document.getElementById('preview-ttd-sekretaris-wrapper').style.display='none'; hapusTtdCanvas('sekretaris');">✕ Reset</button>
+                    </div>
+                  </div>
+                </div>
+                <div class="col-md-6">
+                  <label class="form-label font-semibold text-xs text-gray-700">TANDA TANGAN KETUA RT</label>
+                  <div class="p-2 border rounded bg-white text-center">
+                    <canvas id="canvas-ttd-ketua" width="280" height="110" style="border:2px dashed #6c757d; border-radius:8px; cursor:crosshair; touch-action:none; background:#fff; display:block; margin:0 auto;" title="Tanda tangan di sini"></canvas>
+                    <div class="d-flex gap-2 mt-2 justify-content-center">
+                      <button type="button" class="btn btn-sm btn-outline-danger" onclick="hapusTtdCanvas('ketua')"><i class="bi bi-eraser-fill me-1"></i>Hapus</button>
+                      <button type="button" class="btn btn-sm btn-outline-success" onclick="simpanTtdCanvas('ketua')"><i class="bi bi-check-circle-fill me-1"></i>Gunakan Tanda Tangan Ini</button>
+                    </div>
+                    <input type="hidden" id="set-ttd-ketua-rt" value="${appSettings.ttd_ketua_rt || ''}">
+                    <div id="preview-ttd-ketua-wrapper" class="mt-2" style="${appSettings.ttd_ketua_rt ? '' : 'display:none;'}">
+                      <small class="text-success font-bold text-[10px] d-block mb-1"><i class="bi bi-check-circle me-1"></i>Tanda tangan tersimpan:</small>
+                      <img id="preview-ttd-ketua-rt" src="${appSettings.ttd_ketua_rt || ''}" class="border rounded" style="max-height:55px;object-fit:contain;">
+                      <button type="button" class="btn btn-xs btn-link text-danger text-[10px] d-block mx-auto mt-1" onclick="document.getElementById('set-ttd-ketua-rt').value=''; document.getElementById('preview-ttd-ketua-wrapper').style.display='none'; hapusTtdCanvas('ketua');">✕ Reset</button>
+                    </div>
+                  </div>
+                </div>
               </div>
               <div class="mb-3">
                 <label class="form-label font-semibold text-xs text-gray-700">NOMOR WHATSAPP DEFAULT LAPORAN RT <small class="text-primary font-bold">(Untuk Laporan Aduan, Surat & Sumbangan)</small></label>
@@ -2235,7 +2570,7 @@ async function renderPengaturanRTView() {
               </div>
               <div class="mb-3">
                 <label class="form-label font-semibold text-xs text-gray-700">NAMA MERCHANT / SHIFT KODE QRIS</label>
-                <input type="text" id="set-payment-qris-name" class="form-control form-control-sm" value="${appSettings.payment_qris_name || ''}" placeholder="Contoh: KAHFI EMERALD 1 / RT 008/006">
+                <input type="text" id="set-payment-qris-name" class="form-control form-control-sm" value="${appSettings.payment_qris_name || ''}" placeholder="Contoh: RT 5 / RW 01">
               </div>
               <div class="mb-4">
                 <label class="form-label font-semibold text-xs text-gray-700">URL FOTO QRIS STATIS (OPSIONAL / Gambar Cadangan)</label>
@@ -2411,6 +2746,10 @@ async function renderPengaturanRTView() {
       </div>
     </div>`;
   document.getElementById('main-content').innerHTML = html;
+  setTimeout(function() {
+    initTtdSignaturePad('canvas-ttd-sekretaris', 'sekretaris');
+    initTtdSignaturePad('canvas-ttd-ketua', 'ketua');
+  }, 100);
 }
 document.addEventListener("DOMContentLoaded", function() {
   try {
@@ -2521,4 +2860,4 @@ function tampilkanModalPanduanInstallPWA() {
   bsModal.show();
 }
 console.log("%cMAU NGAPAIN LU? 🤨", "color:#ef4444;font-size:38px;font-weight:900;padding:10px;");
-console.log("%cMending bayar iuran KAHFI EMERALD 1 daripada ngintipin console 🤣", "color:#2563eb;font-size:14px;font-weight:bold;");
+console.log("%cMending bayar iuran RT 5 daripada ngintipin console 🤣", "color:#2563eb;font-size:14px;font-weight:bold;");

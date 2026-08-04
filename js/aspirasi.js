@@ -39,12 +39,12 @@ function renderAspirasiView(data) {
         <button onclick="tutupModalAspirasi()" class="absolute top-4 right-4 text-gray-400 hover:text-gray-600 font-bold text-lg w-8 h-8 flex items-center justify-center rounded-full bg-gray-100">&times;</button>
         <div class="mb-4 border-b pb-2">
           <h3 class="font-bold text-gray-800 text-sm">Tulis Aspirasi / Saran</h3>
-          <p class="text-[11px] text-gray-500">Kirim kritik, saran, atau masukan untuk kemajuan RT 008/006.</p>
+          <p class="text-[11px] text-gray-500">Kirim kritik, saran, atau masukan untuk kemajuan RT 5.</p>
         </div>
         <form id="formAspirasi" onsubmit="submitAspirasi(event)" class="space-y-3">
           <div>
             <label class="block text-[11px] font-bold text-gray-600 uppercase mb-1">ISI ASPIRASI / MASUKAN</label>
-            <textarea id="aspirasiIsi" rows="4" required class="w-full p-2 border border-gray-300 rounded-xl text-xs focus:ring-2 focus:ring-blue-500 outline-none" placeholder="Tulis kritik, saran, atau masukan untuk kemajuan KAHFI EMERALD 1 RT 008/006..."></textarea>
+            <textarea id="aspirasiIsi" rows="4" required class="w-full p-2 border border-gray-300 rounded-xl text-xs focus:ring-2 focus:ring-blue-500 outline-none" placeholder="Tulis kritik, saran, atau masukan untuk kemajuan RT 5..."></textarea>
           </div>
           <div class="flex justify-end gap-2 pt-2">
             <button type="button" onclick="tutupModalAspirasi()" class="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-600 rounded-xl text-xs font-bold transition">Batal</button>
@@ -139,20 +139,24 @@ async function hapusAspirasi(id) {
     loadMenu('Aspirasi');
   }, 'Hapus Aspirasi');
 }
+async function loadAspirasiView() {
+  currentActiveMenu = 'Aspirasi';
+  syncActiveNav('Aspirasi');
+  document.getElementById('page-title').innerText = 'Aspirasi Warga';
+  document.getElementById('main-content').innerHTML = '<div class="text-center py-5"><div class="spinner-border text-primary" role="status"></div><br><small class="text-muted mt-2 d-block">Memuat kotak aspirasi...</small></div>';
+  document.getElementById('rek-info').style.display = 'none';
+  const res = await callGASGet('getTableData', { sheetName: 'Aspirasi' });
+  if (res) {
+    currentHeaders = res.headers || [];
+    currentRows = res.rows || [];
+    renderAspirasiView(res);
+  }
+}
+window.loadAspirasiView = loadAspirasiView;
 const originalLoadMenuAspirasi = window.loadMenu;
 window.loadMenu = async function(menu) {
   if (menu === 'Aspirasi') {
-    currentActiveMenu = menu;
-    syncActiveNav(menu);
-    document.getElementById('page-title').innerText = 'Aspirasi Warga';
-    document.getElementById('main-content').innerHTML = '<div class="text-center py-5"><div class="spinner-border text-primary" role="status"></div><br><small class="text-muted mt-2 d-block">Memuat kotak aspirasi...</small></div>';
-    document.getElementById('rek-info').style.display = 'none';
-    const res = await callGASGet('getTableData', { sheetName: 'Aspirasi' });
-    if (res) {
-      currentHeaders = res.headers || [];
-      currentRows = res.rows || [];
-      renderAspirasiView(res);
-    }
+    loadAspirasiView();
   } else {
     if (typeof originalLoadMenuAspirasi === 'function') originalLoadMenuAspirasi(menu);
   }

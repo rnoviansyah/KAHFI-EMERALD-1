@@ -15,7 +15,7 @@ function renderAsetCustom(data) {
   let html = `
     <div class="p-1 text-gray-800 font-sans space-y-4">
       <div class="flex justify-between items-center flex-wrap gap-2">
-        <h2 class="font-bold text-base text-gray-800"><i class="bi bi-tools me-2 text-blue-600"></i>Aset & Inventaris RT 008/006</h2>
+        <h2 class="font-bold text-base text-gray-800"><i class="bi bi-tools me-2 text-blue-600"></i>Aset & Inventaris RT 5</h2>
         <div class="flex gap-2">
           ${btnRtTambah}
           <button onclick="bukaModalPinjamBarang()" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-3 rounded-xl text-xs shadow transition flex items-center gap-1">
@@ -170,7 +170,7 @@ function renderAsetCustom(data) {
             <textarea id="verifCatatanRt" rows="3" class="w-full p-2 border border-gray-300 rounded-xl text-xs focus:ring-2 focus:ring-blue-500 outline-none" placeholder="Contoh: Ambil di gudang RT samping posyandu jam 4 sore..."></textarea>
           </div>
           <div class="flex justify-end gap-2 pt-2 border-t">
-            <button type="button" onclick="kirimVerifikasiRT('Ditolak')" class="px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded-xl text-xs font-bold transition">Tolak</button>
+            <button type="button" onclick="kirimVerifikasiRT('Ditolak')" class="px-4 py-2 bg-rose-600 hover:bg-rose-700 text-white rounded-xl text-xs font-bold transition">Tolak</button>
             <button type="button" onclick="kirimVerifikasiRT('Disetujui')" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold shadow transition">Setujui (ACC)</button>
           </div>
         </div>
@@ -525,20 +525,24 @@ async function kirimPengembalianRT(e) {
     }
   }
 }
+async function loadAsetView() {
+  currentActiveMenu = 'Aset';
+  syncActiveNav('Aset');
+  document.getElementById('page-title').innerText = 'Aset & Inventaris';
+  document.getElementById('main-content').innerHTML = '<div class="text-center py-5"><div class="spinner-border text-primary" role="status"></div><br><small class="text-muted mt-2 d-block">Memuat data aset & peminjaman...</small></div>';
+  document.getElementById('rek-info').style.display = 'none';
+  const res = await callGASGet('getTableData', { sheetName: 'Aset' });
+  if (res) {
+    currentHeaders = res.headers || [];
+    currentRows = res.rows || [];
+    renderAsetCustom(res);
+  }
+}
+window.loadAsetView = loadAsetView;
 const originalLoadMenuAset = window.loadMenu;
 window.loadMenu = async function(menu) {
-  if (menu === 'Aset') {
-    currentActiveMenu = menu;
-    syncActiveNav(menu);
-    document.getElementById('page-title').innerText = 'Aset & Inventaris';
-    document.getElementById('main-content').innerHTML = '<div class="text-center py-5"><div class="spinner-border text-primary" role="status"></div><br><small class="text-muted mt-2 d-block">Memuat data aset & peminjaman...</small></div>';
-    document.getElementById('rek-info').style.display = 'none';
-    const res = await callGASGet('getTableData', { sheetName: 'Aset' });
-    if (res) {
-      currentHeaders = res.headers || [];
-      currentRows = res.rows || [];
-      renderAsetCustom(res);
-    }
+  if (menu === 'Aset' || menu === 'Inventaris') {
+    loadAsetView();
   } else {
     if (typeof originalLoadMenuAset === 'function') originalLoadMenuAset(menu);
   }

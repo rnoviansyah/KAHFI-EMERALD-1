@@ -12,6 +12,7 @@ async function loadIuranView() {
     document.getElementById('main-content').innerHTML = `<div class="alert alert-danger">${res.message || 'Gagal memuat data'}</div>`;
   }
 }
+window.loadIuranView = loadIuranView;
 function getVal(r, headers, colName, defaultVal = '') {
   let idx = headers.indexOf(colName.toLowerCase());
   return idx > -1 && r[idx] !== undefined && r[idx] !== "" ? r[idx] : defaultVal;
@@ -35,7 +36,7 @@ function renderIuranCustom(data) {
       <!-- Header Banner Status Iuran -->
       <div class="bg-gradient-to-r from-blue-900 to-blue-600 text-white p-5 rounded-2xl shadow-md mb-4 text-center">
         <h2 class="font-bold text-lg mb-1"><i class="bi bi-wallet2 me-2"></i>Status Iuran Warga ${new Date().getFullYear()}</h2>
-        <p class="text-xs text-blue-100">Transparan, Cek Status & Pembayaran Bulanan RT 008/006</p>
+        <p class="text-xs text-blue-100">Transparan, Cek Status & Pembayaran Bulanan RT 5</p>
       </div>
       <!-- Tombol Tambah Khusus RT -->
       ${session.role === 'RT' ? `
@@ -88,32 +89,28 @@ function renderIuranCustom(data) {
           <div class="bg-white p-3 rounded-2xl border border-gray-200 shadow-sm inline-block">
             <h5 class="font-bold text-gray-900 text-xs mb-0.5" id="qris-merchant-name">SHN GROUP</h5>
             <p class="text-[9px] text-gray-500 font-mono mb-2">DYNAMIC QRIS (NOMINAL OTOMATIS TERISI)</p>
-            <img id="qris-dynamic-img" src="" class="w-44 h-auto mx-auto rounded-lg object-contain">
+            <div id="qris-canvas-container" class="flex justify-center p-2 bg-white rounded-xl shadow-inner border border-gray-100 min-h-[200px] items-center">
+              <img id="qris-dynamic-img" src="" class="max-w-[200px] max-h-[200px] rounded-lg shadow-sm" alt="Dynamic QRIS">
+              <canvas id="qris-canvas" class="hidden max-w-[200px] max-h-[200px]"></canvas>
+            </div>
           </div>
         </div>
-        <div id="content-tf" class="hidden space-y-2 text-xs">
-          <div class="bg-blue-50 p-3 rounded-xl border border-blue-100 space-y-1">
-            <p class="text-gray-500 font-bold">Bank BRI: <span class="text-blue-700 font-mono">026101100276505</span></p>
-            <p class="text-gray-500 font-bold">DANA: <span class="text-blue-700 font-mono">08973366667</span></p>
-            <p class="text-gray-500 font-bold">GoPay: <span class="text-blue-700 font-mono">08973366667</span></p>
-            <p class="text-[10px] text-gray-400">Atas Nama: RIZKY NOVIANSYAH</p>
+        <!-- TAMPILAN TRANSFER BANK -->
+        <div id="content-tf" class="hidden text-xs space-y-2">
+          <div id="bank-accounts-list" class="space-y-2 max-h-48 overflow-y-auto pe-1">
+            <!-- Dt Rekening dari Settings -->
           </div>
         </div>
-        <!-- UPLOAD BUKTI TRANSFER -->
-        <div class="mt-3 text-left border-t pt-3">
-          <label class="font-bold text-gray-700 text-xs mb-1 block"><i class="bi bi-upload me-1 text-blue-600"></i>Upload Bukti Transfer (Foto)</label>
-          <input type="file" id="iuran-bukti-file" accept="image/*" class="w-full text-xs p-1.5 border rounded-xl bg-gray-50">
-          <small class="text-[9px] text-gray-400 mt-1 block">*Harap lampirkan foto struk / screenshot transfer yang jelas.</small>
-        </div>
-        <div class="mt-4 space-y-2">
-          <button id="btn-kirim-bukti" onclick="prosesKirimBuktiBayar()" class="w-full bg-blue-600 hover:bg-blue-700 text-white p-2.5 rounded-xl text-xs font-bold shadow transition flex items-center justify-center gap-1">
-            <i class="bi bi-send-check-fill"></i> Kirim Bukti Pembayaran
+        <!-- FORM UPLOAD BUKTI UNTUK SEMUA METODE -->
+        <form id="form-upload-iuran" onsubmit="submitBuktiIuran(event)" class="mt-4 border-t pt-3 space-y-3">
+          <div>
+            <label class="block text-[11px] font-bold text-gray-700 mb-1">Unggah Bukti Transfer / Pembayaran</label>
+            <input type="file" id="file-bukti-iuran" accept="image/*" class="w-full text-xs text-gray-500 file:mr-2 file:py-1.5 file:px-3 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-blue-50 file:text-blue-600 hover:file:bg-blue-100 transition" required>
+          </div>
+          <button type="submit" id="btn-submit-iuran" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2.5 rounded-xl text-xs shadow transition">
+            Kirim Bukti Pembayaran
           </button>
-          <button onclick="kirimKonfirmasiWA()" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white p-2 rounded-xl text-xs font-bold transition flex items-center justify-center gap-1">
-            <i class="bi bi-whatsapp"></i> Konfirmasi via WhatsApp
-          </button>
-          <button onclick="tutupModalBayarIuran()" class="w-full bg-gray-100 hover:bg-gray-200 text-gray-600 p-2 rounded-xl text-xs font-bold transition">Tutup</button>
-        </div>
+        </form>
       </div>
     </div>
   `;
@@ -232,11 +229,12 @@ function generateDynamicQRIS(staticQris, nominal) {
 }
 function bukaModalBayarIuran(id, bulan, tahun, nominal) {
   activeBayarId = id;
+  switchTabBayar('qris');
   let infoEl = document.getElementById('info-bayar-target');
   if (infoEl) {
     infoEl.innerText = `Iuran ${bulan} ${tahun} - Rp ${Number(nominal).toLocaleString('id-ID')}`;
   }
-  let fileInp = document.getElementById('iuran-bukti-file');
+  let fileInp = document.getElementById('file-bukti-iuran');
   if (fileInp) fileInp.value = '';
   let baseStaticQris = (typeof appSettings !== 'undefined' && appSettings.payment_qris_string)
     ? appSettings.payment_qris_string
@@ -244,11 +242,11 @@ function bukaModalBayarIuran(id, bulan, tahun, nominal) {
   let qrisDinamisString = generateDynamicQRIS(baseStaticQris, nominal);
   let qrImgEl = document.getElementById('qris-dynamic-img');
   if (qrImgEl) {
-    qrImgEl.src = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(qrisDinamisString)}`;
+    qrImgEl.src = `https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(qrisDinamisString)}`;
   }
   let merchantEl = document.getElementById('qris-merchant-name');
   if (merchantEl) {
-    merchantEl.innerText = (typeof appSettings !== 'undefined' && appSettings.payment_qris_name) ? appSettings.payment_qris_name : 'KAHFI EMERALD 1 / RT 008/006';
+    merchantEl.innerText = (typeof appSettings !== 'undefined' && appSettings.payment_qris_name) ? appSettings.payment_qris_name : 'SHN GROUP';
   }
   let tfBox = document.getElementById('content-tf');
   if (tfBox) {
@@ -274,18 +272,22 @@ function tutupModalBayarIuran() {
   let modal = document.getElementById('modal-bayar-iuran');
   if (modal) modal.classList.add('hidden');
 }
+async function submitBuktiIuran(e) {
+  if (e && e.preventDefault) e.preventDefault();
+  return prosesKirimBuktiBayar();
+}
 async function prosesKirimBuktiBayar() {
   if (!activeBayarId) {
     alert('ID Tagihan iuran tidak ditemukan!');
     return;
   }
-  let fileInp = document.getElementById('iuran-bukti-file');
+  let fileInp = document.getElementById('file-bukti-iuran') || document.getElementById('iuran-bukti-file');
   let file = fileInp && fileInp.files ? fileInp.files[0] : null;
   if (!file) {
     alert('Silakan pilih dan upload foto bukti transfer terlebih dahulu!');
     return;
   }
-  let btnSubmit = document.getElementById('btn-kirim-bukti');
+  let btnSubmit = document.getElementById('btn-submit-iuran') || document.getElementById('btn-kirim-bukti');
   if (btnSubmit) {
     btnSubmit.disabled = true;
     btnSubmit.innerText = 'Mengunggah & Mengirim...';
@@ -320,6 +322,7 @@ async function prosesKirimBuktiBayar() {
     }
   }
 }
+window.submitBuktiIuran = submitBuktiIuran;
 async function verifikasiPembayaranRT(id) {
   showUIConfirm('Apakah Anda yakin ingin memverifikasi pembayaran iuran ini menjadi LUNAS?', async function() {
     let nowFormatted = new Date().toLocaleDateString('id-ID', {
@@ -328,7 +331,7 @@ async function verifikasiPembayaranRT(id) {
     let formData = {
       status: 'LUNAS',
       tanggal_bayar: nowFormatted,
-      diterima_oleh: 'RT 008/006 (' + (session.nama || 'Pengurus') + ')'
+      diterima_oleh: 'RT 5 (' + (session.nama || 'Pengurus') + ')'
     };
     let res = await safeSupabaseUpdate('Iuran', formData, 'id', id);
     if (res && (!res.error || res.status === 'success')) {
@@ -452,7 +455,7 @@ async function simpanEditIuranRT(event, id) {
       day: '2-digit', month: '2-digit', year: 'numeric'
     }) + ' ' + new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }).replace('.', ':') + ' WIB';
     updatePayload.tanggal_bayar = nowFormatted;
-    updatePayload.diterima_oleh = 'RT 008/006 (' + (session.nama || 'Pengurus') + ')';
+    updatePayload.diterima_oleh = 'RT 5 (' + (session.nama || 'Pengurus') + ')';
   }
   let res = await safeSupabaseUpdate('Iuran', updatePayload, 'id', id);
   if (res && (!res.error || res.status === 'success')) {
@@ -593,7 +596,7 @@ async function simpanIuranBaruRT(event) {
       day: '2-digit', month: '2-digit', year: 'numeric'
     }) + ' ' + new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }).replace('.', ':') + ' WIB';
     formData.tanggal_bayar = nowFormatted;
-    formData.diterima_oleh = 'RT 008/006 (' + (session.nama || 'Pengurus') + ')';
+    formData.diterima_oleh = 'RT 5 (' + (session.nama || 'Pengurus') + ')';
     let kasItem = {
       id: 'KAS-' + Date.now(),
       tanggal: nowFormatted,
@@ -638,7 +641,7 @@ function switchTabBayar(type) {
   }
 }
 function kirimKonfirmasiWA() {
-  let pesan = `Halo Pengurus RT 008/006, saya ${session.nama || session.nik} ingin konfirmasi telah mengirimkan bukti pembayaran iuran bulanan warga.`;
+  let pesan = `Halo Pengurus RT 5, saya ${session.nama || session.nik} ingin konfirmasi telah mengirimkan bukti pembayaran iuran bulanan warga.`;
   window.open(`https://wa.me/${noWaAdmin}?text=${encodeURIComponent(pesan)}`, '_blank');
 }
 const originalLoadMenuIuran = window.loadMenu;
