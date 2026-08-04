@@ -485,18 +485,6 @@ async function callGASPost(actionName, extraPayload = {}) {
         console.warn('[Login] Fallback Users table error:', err);
       }
 
-      // Tier 3: Failsafe untuk akun adminrt default (Mendukung admin123, admin, 123, ...)
-      if (uClean === 'adminrt' && (pClean === 'admin123' || pClean === 'admin' || pClean === '123' || pClean === '...')) {
-        return {
-          status: 'success',
-          role: 'RT',
-          nik: '0',
-          nama: 'Administrator KAHFI EMERALD 1',
-          username: 'adminrt',
-          message: 'Login Admin RT Berhasil'
-        };
-      }
-
       return { status: 'error', message: 'Username atau Password salah!' };
     }
 
