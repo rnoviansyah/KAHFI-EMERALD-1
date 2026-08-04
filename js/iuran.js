@@ -172,18 +172,34 @@ function renderListBulanDatabase(rows, headers) {
     let badgeHtml = '';
 
     if (isLunas) {
-      badgeHtml = `
-        <div class="text-right">
-          <span class="bg-emerald-100 text-emerald-700 px-3 py-1 rounded-full text-[10px] font-bold">LUNAS</span>
-          <span class="block text-[9px] text-gray-400 mt-0.5"><i class="bi bi-clock me-1"></i>${tglBayar}</span>
-        </div>`;
+      if (session.role === 'RT') {
+        badgeHtml = `
+          <div class="text-right flex flex-col items-end gap-1">
+            <div class="flex items-center gap-1">
+              <span class="bg-emerald-100 text-emerald-700 px-2.5 py-0.5 rounded-full text-[10px] font-bold">LUNAS</span>
+              <button onclick="bukaModalEditIuranRT('${rowId}')" title="Edit Tagihan" class="bg-amber-500 hover:bg-amber-600 text-white p-1 px-2 rounded-lg text-[10px] font-bold shadow transition flex items-center gap-1"><i class="bi bi-pencil-square"></i> Edit</button>
+              <button onclick="hapusIuranRT('${rowId}')" title="Hapus Tagihan" class="bg-rose-600 hover:bg-rose-700 text-white p-1 px-2 rounded-lg text-[10px] font-bold shadow transition flex items-center gap-1"><i class="bi bi-trash-fill"></i> Hapus</button>
+            </div>
+            <span class="block text-[9px] text-gray-400 mt-0.5"><i class="bi bi-clock me-1"></i>${tglBayar}</span>
+          </div>`;
+      } else {
+        badgeHtml = `
+          <div class="text-right">
+            <span class="bg-emerald-100 text-emerald-700 px-3 py-1 rounded-full text-[10px] font-bold">LUNAS</span>
+            <span class="block text-[9px] text-gray-400 mt-0.5"><i class="bi bi-clock me-1"></i>${tglBayar}</span>
+          </div>`;
+      }
     } else if (isMenunggu) {
       if (session.role === 'RT') {
         badgeHtml = `
           <div class="text-right flex flex-col items-end gap-1">
             <span class="bg-amber-100 text-amber-700 px-2.5 py-0.5 rounded-full text-[10px] font-bold">Menunggu Verifikasi</span>
             ${buktiUrl && buktiUrl !== '-' ? `<button onclick="bukaPopUpFoto('${buktiUrl}')" class="text-[10px] text-blue-600 underline font-semibold">Cek Bukti Foto</button>` : ''}
-            <button onclick="verifikasiPembayaranRT('${rowId}')" class="bg-emerald-600 hover:bg-emerald-700 text-white px-2.5 py-1 rounded-xl text-[10px] font-bold shadow transition">ACC / Verifikasi Lunas</button>
+            <div class="flex items-center gap-1 mt-0.5">
+              <button onclick="verifikasiPembayaranRT('${rowId}')" class="bg-emerald-600 hover:bg-emerald-700 text-white px-2.5 py-1 rounded-lg text-[10px] font-bold shadow transition">ACC / Verifikasi Lunas</button>
+              <button onclick="bukaModalEditIuranRT('${rowId}')" title="Edit Tagihan" class="bg-amber-500 hover:bg-amber-600 text-white p-1 px-2 rounded-lg text-[10px] font-bold shadow transition flex items-center gap-1"><i class="bi bi-pencil-square"></i> Edit</button>
+              <button onclick="hapusIuranRT('${rowId}')" title="Hapus Tagihan" class="bg-rose-600 hover:bg-rose-700 text-white p-1 px-2 rounded-lg text-[10px] font-bold shadow transition flex items-center gap-1"><i class="bi bi-trash-fill"></i> Hapus</button>
+            </div>
           </div>`;
       } else {
         badgeHtml = `
@@ -197,7 +213,11 @@ function renderListBulanDatabase(rows, headers) {
         badgeHtml = `
           <div class="text-right flex flex-col items-end gap-1">
             <span class="bg-rose-100 text-rose-700 px-2.5 py-0.5 rounded-full text-[10px] font-bold">Belum Lunas</span>
-            <button onclick="verifikasiPembayaranRT('${rowId}')" class="bg-emerald-600 hover:bg-emerald-700 text-white px-2.5 py-1 rounded-xl text-[10px] font-bold shadow transition">+ Tandai Lunas</button>
+            <div class="flex items-center gap-1 mt-0.5">
+              <button onclick="verifikasiPembayaranRT('${rowId}')" class="bg-emerald-600 hover:bg-emerald-700 text-white px-2.5 py-1 rounded-lg text-[10px] font-bold shadow transition">+ Tandai Lunas</button>
+              <button onclick="bukaModalEditIuranRT('${rowId}')" title="Edit Tagihan" class="bg-amber-500 hover:bg-amber-600 text-white p-1 px-2 rounded-lg text-[10px] font-bold shadow transition flex items-center gap-1"><i class="bi bi-pencil-square"></i> Edit</button>
+              <button onclick="hapusIuranRT('${rowId}')" title="Hapus Tagihan" class="bg-rose-600 hover:bg-rose-700 text-white p-1 px-2 rounded-lg text-[10px] font-bold shadow transition flex items-center gap-1"><i class="bi bi-trash-fill"></i> Hapus</button>
+            </div>
           </div>`;
       } else {
         badgeHtml = `<button onclick="bukaModalBayarIuran('${rowId}', '${bulanVal}', '${tahunVal}', '${nominalVal}')" class="bg-blue-600 hover:bg-blue-700 text-white px-3.5 py-1.5 rounded-xl text-[11px] font-bold shadow transition">Bayar</button>`;
@@ -421,11 +441,132 @@ async function verifikasiPembayaranRT(id) {
       showUIToast('Pembayaran iuran LUNAS & otomatis masuk Laporan Keuangan!', 'success');
       loadMenu('Iuran');
       fetchNotifikasi();
-    } else {
-      let errMsg = (res && res.error) ? res.error.message : ((res && res.message) ? res.message : 'Terjadi kesalahan');
-      showUIToast('Gagal memverifikasi: ' + errMsg, 'error');
     }
   }, 'Verifikasi Iuran');
+}
+
+function bukaModalEditIuranRT(id) {
+  let idIdx = iuranHeaders.indexOf('id');
+  let iuranItem = rawIuranData.find(r => idIdx > -1 && String(r[idIdx]) === String(id));
+  if (!iuranItem) {
+    showUIToast('Data iuran tidak ditemukan!', 'error');
+    return;
+  }
+
+  let styleId = 'hide-modal-footer-override';
+  if (!document.getElementById(styleId)) {
+    let style = document.createElement('style');
+    style.id = styleId;
+    style.innerHTML = `#formModal .modal-footer { display: none !important; }`;
+    document.head.appendChild(style);
+  }
+
+  let nikVal = getVal(iuranItem, iuranHeaders, 'nik', '');
+  let namaVal = getVal(iuranItem, iuranHeaders, 'nama', '');
+  let bulanVal = getVal(iuranItem, iuranHeaders, 'bulan', 'Januari');
+  let tahunVal = getVal(iuranItem, iuranHeaders, 'tahun', new Date().getFullYear().toString());
+  let nominalVal = getVal(iuranItem, iuranHeaders, 'nominal', '25000');
+  let statusVal = getVal(iuranItem, iuranHeaders, 'status', 'Belum Lunas');
+
+  let months = ["Januari","Februari","Maret","April","Mei","Juni","Juli","Agustus","September","Oktober","November","Desember"];
+  let bulanOpts = months.map(m => `<option value="${m}" ${m === bulanVal ? 'selected' : ''}>${m}</option>`).join('');
+
+  let currentYear = new Date().getFullYear();
+  let yearOptions = '';
+  for (let y = currentYear - 2; y <= currentYear + 3; y++) {
+    yearOptions += `<option value="${y}" ${String(y) === String(tahunVal) ? 'selected' : ''}>${y}</option>`;
+  }
+
+  let htmlForm = `
+    <div class="p-2 space-y-3 text-xs">
+      <div>
+        <label class="font-bold text-gray-600 mb-1 block">Nama Warga</label>
+        <input type="text" id="edit-iuran-nama" value="${namaVal}" class="w-full p-2 border rounded-xl bg-gray-50" readonly>
+      </div>
+      <div>
+        <label class="font-bold text-gray-600 mb-1 block">NIK Warga</label>
+        <input type="text" id="edit-iuran-nik" value="${nikVal}" class="w-full p-2 border rounded-xl bg-gray-50" readonly>
+      </div>
+      <div>
+        <label class="font-bold text-gray-600 mb-1 block">Bulan Iuran</label>
+        <select id="edit-iuran-bulan" class="w-full p-2 border rounded-xl bg-white">
+          ${bulanOpts}
+        </select>
+      </div>
+      <div>
+        <label class="font-bold text-gray-600 mb-1 block">Tahun</label>
+        <select id="edit-iuran-tahun" class="w-full p-2 border rounded-xl bg-white">
+          ${yearOptions}
+        </select>
+      </div>
+      <div>
+        <label class="font-bold text-gray-600 mb-1 block">Nominal Tagihan (Rp)</label>
+        <input type="number" id="edit-iuran-nominal" value="${nominalVal}" class="w-full p-2 border rounded-xl bg-white">
+      </div>
+      <div>
+        <label class="font-bold text-gray-600 mb-1 block">Status Pembayaran</label>
+        <select id="edit-iuran-status" class="w-full p-2 border rounded-xl bg-white">
+          <option value="Belum Lunas" ${statusVal.toLowerCase().includes('belum') ? 'selected' : ''}>Belum Lunas</option>
+          <option value="Menunggu Verifikasi" ${statusVal.toLowerCase().includes('menunggu') ? 'selected' : ''}>Menunggu Verifikasi</option>
+          <option value="Lunas" ${statusVal.toLowerCase() === 'lunas' ? 'selected' : ''}>Lunas</option>
+        </select>
+      </div>
+      <div class="pt-2">
+        <button type="button" onclick="simpanEditIuranRT(event, '${id}')" class="w-full bg-amber-600 hover:bg-amber-700 text-white p-2.5 rounded-xl font-bold shadow transition">Simpan Perubahan</button>
+      </div>
+    </div>
+  `;
+
+  document.getElementById('formModalTitle').innerText = 'Edit Tagihan Iuran Warga';
+  document.getElementById('dynamicForm').innerHTML = htmlForm;
+  document.getElementById('btn-hapus-modal').style.display = 'none';
+  
+  let modal = new bootstrap.Modal(document.getElementById('formModal'));
+  modal.show();
+}
+
+async function simpanEditIuranRT(event, id) {
+  if (event) event.preventDefault();
+
+  let updatePayload = {
+    bulan: document.getElementById('edit-iuran-bulan').value,
+    tahun: document.getElementById('edit-iuran-tahun').value,
+    nominal: document.getElementById('edit-iuran-nominal').value || '25000',
+    status: document.getElementById('edit-iuran-status').value
+  };
+
+  if (updatePayload.status.toUpperCase() === 'LUNAS') {
+    let nowFormatted = new Date().toLocaleDateString('id-ID', {
+      day: '2-digit', month: '2-digit', year: 'numeric'
+    }) + ' ' + new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }).replace('.', ':') + ' WIB';
+    updatePayload.tanggal_bayar = nowFormatted;
+    updatePayload.diterima_oleh = 'RT 008/006 (' + (session.nama || 'Pengurus') + ')';
+  }
+
+  let res = await safeSupabaseUpdate('Iuran', updatePayload, 'id', id);
+  if (res && (!res.error || res.status === 'success')) {
+    delete menuDataCache['Iuran'];
+    showUIToast('Tagihan iuran berhasil diperbarui!', 'success');
+    let modalEl = document.getElementById('formModal');
+    let modalInstance = bootstrap.Modal.getInstance(modalEl);
+    if (modalInstance) modalInstance.hide();
+    loadIuranView();
+  } else {
+    showUIToast('Gagal menyimpan: ' + ((res && res.error) ? res.error.message : 'Terjadi kesalahan'), 'error');
+  }
+}
+
+async function hapusIuranRT(id) {
+  showUIConfirm('Apakah Anda yakin ingin menghapus data tagihan iuran ini?', async function() {
+    let res = await safeSupabaseDelete('Iuran', 'id', id);
+    if (res && (!res.error || res.status === 'success')) {
+      delete menuDataCache['Iuran'];
+      showUIToast('Data tagihan iuran berhasil dihapus!', 'success');
+      loadIuranView();
+    } else {
+      showUIToast('Gagal menghapus: ' + ((res && res.error) ? res.error.message : 'Terjadi kesalahan'), 'error');
+    }
+  }, 'Hapus Tagihan Iuran');
 }
 
 async function bukaModalTambahIuranRT() {
