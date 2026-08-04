@@ -1134,7 +1134,22 @@ function requestNotifPermission() {
 function triggerNativeBrowserNotif(title, body) {
   if ('Notification' in window && Notification.permission === 'granted') {
     try {
-      new Notification(title, { body, icon: 'https://file.aiquickdraw.com/imgcompressed/img/compressed_517f8d7424520a05c902d8a1c25e1ab6.webp' });
+      if (navigator.serviceWorker && navigator.serviceWorker.ready) {
+        navigator.serviceWorker.ready.then(reg => {
+          reg.showNotification(title, {
+            body: body,
+            icon: 'https://file.aiquickdraw.com/imgcompressed/img/compressed_517f8d7424520a05c902d8a1c25e1ab6.webp',
+            badge: 'https://file.aiquickdraw.com/imgcompressed/img/compressed_517f8d7424520a05c902d8a1c25e1ab6.webp',
+            vibrate: [200, 100, 200],
+            tag: 'kahfi-notif-' + Date.now(),
+            renotify: true
+          });
+        }).catch(() => {
+          new Notification(title, { body, icon: 'https://file.aiquickdraw.com/imgcompressed/img/compressed_517f8d7424520a05c902d8a1c25e1ab6.webp' });
+        });
+      } else {
+        new Notification(title, { body, icon: 'https://file.aiquickdraw.com/imgcompressed/img/compressed_517f8d7424520a05c902d8a1c25e1ab6.webp' });
+      }
     } catch(e) {}
   }
 }
