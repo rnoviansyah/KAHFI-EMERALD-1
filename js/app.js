@@ -1434,39 +1434,21 @@ async function checkExistingSession() {
   if (savedSession) {
     try {
       let parsed = JSON.parse(savedSession);
-      if (parsed && parsed.token) {
-        const { data: sessData, error } = await db.from('Sessions').select('*').eq('token', parsed.token);
-        if (!error && sessData && sessData.length > 0) {
-          let sessRow = sessData[0];
-          let dbRole = (sessRow.role || sessRow.ROLE || 'Warga').toString().trim();
-          let dbNik = (sessRow.nik || sessRow.NIK || '').toString().trim();
+      if (parsed && parsed.token && parsed.role) {
+        // Restore sesi langsung dari localStorage agar saat di-refresh TIDAK LOGOUT!
+        session.token     = parsed.token;
+        session.role      = (parsed.role.toString().toUpperCase() === 'RT') ? 'RT' : 'Warga';
+        session.nik       = parsed.nik || '';
+        session.nama      = parsed.nama || '';
+        session.alamat    = parsed.alamat || '';
+        session.noHp      = parsed.noHp || '';
+        session.loginTime = parsed.loginTime || Date.now();
 
-          // Validasi 1: NIK Pemilik Token
-          if (parsed.nik && dbNik && parsed.nik.toString().trim() !== dbNik) {
-            localStorage.removeItem('rt_user_session');
-            location.reload();
-            return;
-          }
-
-          // Validasi 2: User-Agent Perangkat/Browser Binding
-          if (sessRow.user_agent && sessRow.user_agent !== navigator.userAgent) {
-            console.warn('Sesi ditolak: Perangkat / browser tidak cocok!');
-            localStorage.removeItem('rt_user_session');
-            location.reload();
-            return;
-          }
-
-          session.token = parsed.token;
-          session.role = (dbRole.toUpperCase() === 'RT') ? 'RT' : 'Warga';
-          session.nik = dbNik || parsed.nik || '';
-          session.nama = parsed.nama || '';
-          applySessionUI();
-          return;
-        }
+        applySessionUI();
+        verifySessionToken();
       }
-      localStorage.removeItem('rt_user_session');
     } catch(e) {
-      localStorage.removeItem('rt_user_session');
+      console.warn('Gagal membaca sesi lokal:', e);
     }
   }
 }
