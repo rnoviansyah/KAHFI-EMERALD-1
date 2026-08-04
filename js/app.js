@@ -1282,12 +1282,10 @@ function bukaNotifTarget(menuName) {
 async function saveSessionToDatabase(token, nik, role) {
   if (!token || !nik) return;
   let timeStr = new Date().toLocaleString('id-ID');
-  let uAgent = navigator.userAgent;
   let res = await safeSupabaseInsert('Sessions', [{
     token: token,
     nik: nik,
     role: role || 'Warga',
-    user_agent: uAgent,
     createdat: timeStr
   }]);
 
@@ -1295,8 +1293,7 @@ async function saveSessionToDatabase(token, nik, role) {
     await safeSupabaseInsert('Sessions', [{
       token: token,
       nik: nik,
-      role: role || 'Warga',
-      user_agent: uAgent
+      role: role || 'Warga'
     }]);
   }
 }
