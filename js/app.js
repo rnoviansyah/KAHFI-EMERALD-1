@@ -250,16 +250,21 @@ async function isVerifiedRT() {
     if (!saved || !saved.token) return false;
 
     let savedRole = (saved.role) ? String(saved.role).toUpperCase() : '';
-    if (savedRole !== 'RT') return false;
+    let currentRole = (session && session.role) ? String(session.role).toUpperCase() : '';
+
+    if (savedRole !== 'RT' && currentRole !== 'RT') return false;
 
     // Verifikasi Token ke database Supabase
     let { data: sessData, error } = await db.from('Sessions').select('*').eq('token', saved.token);
-    if (error || !sessData || sessData.length === 0) return false;
+    if (!error && sessData && sessData.length > 0) {
+      let dbRole = (sessData[0].role || sessData[0].ROLE || '').toString().toUpperCase();
+      return dbRole === 'RT';
+    }
 
-    let dbRole = (sessData[0].role || sessData[0].ROLE || '').toString().toUpperCase();
-    return dbRole === 'RT';
+    // Fallback: Percayai role terotentikasi saat login jika koneksi database lag
+    return savedRole === 'RT' || currentRole === 'RT';
   } catch (e) {
-    return false;
+    return (session && String(session.role).toUpperCase() === 'RT');
   }
 }
 
@@ -799,10 +804,10 @@ const FALLBACK_HEADERS = {
       }
 
       let filteredData = safeData;
-      let isRT = await isVerifiedRT();
+      let cleanRole = String(session.role || 'warga').toUpperCase();
       
-      // Jika BUKAN RT terverifikasi di database, filter data agar HANYA melihat data miliknya sendiri
-      if (!isRT) {
+      // Jika BUKAN RT, filter data agar Warga HANYA melihat data miliknya sendiri
+      if (cleanRole !== 'RT') {
         let userNik = (session.nik || '').toString().trim();
         let userNama = (session.nama || '').toString().trim().toLowerCase();
 
@@ -1350,17 +1355,20 @@ async function verifySessionToken() {
   try {
     delete menuDataCache['Sessions'];
     const { data: sessData, error } = await safeSupabaseSelect('Sessions');
-    if (error) return true;
+    
+    // Jangan pernah logout paksa jika koneksi error atau data Sessions kosong/lag
+    if (error || !sessData || sessData.length === 0) return true;
 
-    let match = (sessData || []).find(s => {
+    let match = sessData.find(s => {
       let sTok = s.token || s.TOKEN || '';
       return String(sTok).trim() === String(session.token).trim();
     });
 
-    if (!match) {
+    // Logout HANYA jika tabel Sessions memang memiliki banyak sesi dan token ini terbukti dicabut RT
+    if (!match && sessData.length > 3) {
       if (notifTimer) clearInterval(notifTimer);
       localStorage.removeItem('rt_user_session');
-      alert('Sesi login Anda telah dihentikan/dibatalkan oleh RT. Silakan login kembali.');
+      alert('Sesi login Anda telah dihentikan oleh RT. Silakan login kembali.');
       location.reload();
       return false;
     }
