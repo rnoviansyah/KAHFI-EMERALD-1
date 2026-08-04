@@ -788,7 +788,7 @@ const FALLBACK_HEADERS = {
   'Sumbangan': ['id', 'nama', 'tanggal', 'jenis_sumbangan', 'keterangan', 'nominal', 'bukti_transfer', 'status', 'nik'],
   'Aset': ['id', 'nama_barang', 'kondisi', 'jumlah', 'status_barang'],
   'Peminjaman': ['id', 'nama_peminjam', 'id_barang', 'nama_barang', 'jumlah_minta', 'acc', 'keterangan', 'catatan_rt', 'status', 'tanggal', 'nik', 'jumlah'],
-  'Aspirasi': ['id', 'tanggal', 'isi_aspirasi', 'status', 'nik', 'nama'],
+  'Aspirasi': ['id', 'tanggal', 'isi_aspirasi', 'status', 'nama'],
   'Kelahiran': ['id', 'nama_bayi', 'tanggal_lahir', 'nama_ayah', 'nama_ibu', 'alamat', 'rt'],
   'Kematian': ['id', 'nama', 'nik', 'no_kk', 'tanggal_meninggal', 'rt', 'alamat', 'keterangan'],
   'PindahMasuk': ['id', 'nama', 'nik', 'no_kk', 'asal', 'alamat_baru', 'rt', 'tanggal_pindah', 'status_pindah'],
@@ -811,7 +811,7 @@ const FALLBACK_HEADERS = {
         let userNik = (session.nik || '').toString().trim();
         let userNama = (session.nama || '').toString().trim().toLowerCase();
 
-        if (['Pengaduan', 'SuratPengantar', 'Peminjaman', 'Sumbangan', 'Aspirasi'].includes(sheetName)) {
+        if (['Pengaduan', 'SuratPengantar', 'Peminjaman', 'Sumbangan'].includes(sheetName)) {
           filteredData = filteredData.filter(row => {
             let rNik = cariNilaiKolom(row, ['nik', 'ktp', 'no_ktp']).trim();
             let rNama = cariNilaiKolom(row, ['nama', 'nama_lengkap', 'nama_peminjam', 'pelapor', 'pemohon']).toLowerCase().trim();

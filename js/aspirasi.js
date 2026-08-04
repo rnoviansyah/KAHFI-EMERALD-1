@@ -86,7 +86,6 @@ function renderTabelAspirasiRows(rows, isRt, headers = []) {
   let tglIdx = headers.indexOf('tanggal');
   let isiIdx = headers.indexOf('isi_aspirasi');
   let statusIdx = headers.indexOf('status');
-  let nikIdx = headers.indexOf('nik');
   let namaIdx = headers.indexOf('nama');
 
   rows.forEach((r, i) => {
@@ -94,12 +93,14 @@ function renderTabelAspirasiRows(rows, isRt, headers = []) {
     let tglVal = (tglIdx > -1 && r[tglIdx]) ? r[tglIdx] : (r[1] || '-');
     let isiVal = (isiIdx > -1 && r[isiIdx]) ? r[isiIdx] : (r[2] || '-');
     let statusVal = (statusIdx > -1 && r[statusIdx]) ? r[statusIdx] : (r[3] || 'Baru');
-    let nikVal = (nikIdx > -1 && r[nikIdx]) ? r[nikIdx] : (r[4] || '-');
-    let namaVal = (namaIdx > -1 && r[namaIdx]) ? r[namaIdx] : (r[5] || '-');
+    let namaVal = (namaIdx > -1 && r[namaIdx]) ? r[namaIdx] : (r[4] || '-');
 
-    let pengirimHtml = (namaVal && namaVal !== '-') 
-      ? `${namaVal} <small class="text-gray-400 font-normal block">NIK: ${nikVal}</small>`
-      : `NIK: ${nikVal}`;
+    let pengirimHtml = '-';
+    if (namaVal && namaVal !== '-' && namaVal !== 'null') {
+      pengirimHtml = namaVal;
+    } else {
+      pengirimHtml = `<span class="text-gray-400 italic font-normal">Anonim (Data Lama)</span>`;
+    }
 
     let aksiHtml = isRt ? `
       <button onclick="hapusAspirasi('${idVal}')" class="bg-red-50 text-red-600 hover:bg-red-100 border border-red-200 px-2 py-1 rounded-lg text-[10px] font-bold transition">
@@ -135,12 +136,13 @@ async function submitAspirasi(e) {
   btn.disabled = true;
   btn.innerText = 'Mengirim...';
 
+  let namaPengirim = session.nama || session.nik || 'Warga';
+
   let payload = {
     tanggal: new Date().toLocaleDateString('id-ID') + ' ' + new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }).replace('.', ':') + ' WIB',
     isi_aspirasi: isi,
     status: 'Baru',
-    nik: session.nik || '0',
-    nama: session.nama || session.nik || 'Warga'
+    nama: namaPengirim
   };
 
   const res = await callGASPost('simpanDataKeSheet', {
