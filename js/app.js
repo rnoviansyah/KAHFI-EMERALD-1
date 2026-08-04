@@ -1277,10 +1277,12 @@ function bukaNotifTarget(menuName) {
 async function saveSessionToDatabase(token, nik, role) {
   if (!token || !nik) return;
   let timeStr = new Date().toLocaleString('id-ID');
+  let uAgent = navigator.userAgent;
   let res = await safeSupabaseInsert('Sessions', [{
     token: token,
     nik: nik,
     role: role || 'Warga',
+    user_agent: uAgent,
     createdat: timeStr
   }]);
 
@@ -1288,7 +1290,8 @@ async function saveSessionToDatabase(token, nik, role) {
     await safeSupabaseInsert('Sessions', [{
       token: token,
       nik: nik,
-      role: role || 'Warga'
+      role: role || 'Warga',
+      user_agent: uAgent
     }]);
   }
 }
@@ -1340,26 +1343,20 @@ window.processLogin = doLogin;
 async function verifySessionToken() {
   if (!session || !session.token) return true;
 
-  // Grace period 15 detik setelah login agar insert sesi ke DB selesai tanpa race-condition
   if (session.loginTime && (Date.now() - session.loginTime < 15000)) {
     return true;
   }
 
   try {
-    // Hapus cache Sessions agar selalu cek data paling fresh langsung dari Supabase
     delete menuDataCache['Sessions'];
     const { data: sessData, error } = await safeSupabaseSelect('Sessions');
-
-    // Jika terjadi error koneksi, jangan logout paksa (resiliensi jaringan)
     if (error) return true;
 
-    // Cari token di database
     let match = (sessData || []).find(s => {
       let sTok = s.token || s.TOKEN || '';
       return String(sTok).trim() === String(session.token).trim();
     });
 
-    // Jika token tidak ditemukan di DB (sesi dicabut RT), logout seketika!
     if (!match) {
       if (notifTimer) clearInterval(notifTimer);
       localStorage.removeItem('rt_user_session');
@@ -1397,7 +1394,6 @@ function applySessionUI() {
   fetchNotifikasi();
   verifySessionToken();
 
-  // Fix #3/#4: Interval polling dikurangi dari 15s ke 60s untuk hemat egress
   if (notifTimer) clearInterval(notifTimer);
   notifTimer = setInterval(async function() {
     if (session.token && document.visibilityState === "visible") {
@@ -1408,7 +1404,7 @@ function applySessionUI() {
         if (!isModalOpen) muatInfoWargaRealtime();
       }
     }
-  }, 60000); // 60 detik (hemat egress ~4x lipat)
+  }, 60000);
 }
 
 async function doLogout() {
@@ -1431,19 +1427,35 @@ async function checkExistingSession() {
     try {
       let parsed = JSON.parse(savedSession);
       if (parsed && parsed.token) {
-        // Cek langsung ke database Supabase apakah token ini valid dan terdaftar
         const { data: sessData, error } = await db.from('Sessions').select('*').eq('token', parsed.token);
         if (!error && sessData && sessData.length > 0) {
-          let dbRole = (sessData[0].role || sessData[0].ROLE || 'Warga').toString().trim();
+          let sessRow = sessData[0];
+          let dbRole = (sessRow.role || sessRow.ROLE || 'Warga').toString().trim();
+          let dbNik = (sessRow.nik || sessRow.NIK || '').toString().trim();
+
+          // Validasi 1: NIK Pemilik Token
+          if (parsed.nik && dbNik && parsed.nik.toString().trim() !== dbNik) {
+            localStorage.removeItem('rt_user_session');
+            location.reload();
+            return;
+          }
+
+          // Validasi 2: User-Agent Perangkat/Browser Binding
+          if (sessRow.user_agent && sessRow.user_agent !== navigator.userAgent) {
+            console.warn('Sesi ditolak: Perangkat / browser tidak cocok!');
+            localStorage.removeItem('rt_user_session');
+            location.reload();
+            return;
+          }
+
           session.token = parsed.token;
           session.role = (dbRole.toUpperCase() === 'RT') ? 'RT' : 'Warga';
-          session.nik = sessData[0].nik || parsed.nik || '';
+          session.nik = dbNik || parsed.nik || '';
           session.nama = parsed.nama || '';
           applySessionUI();
           return;
         }
       }
-      // Jika token tidak ditemukan / palsu di DB, hapus localStorage dan tampilkan form login
       localStorage.removeItem('rt_user_session');
     } catch(e) {
       localStorage.removeItem('rt_user_session');
